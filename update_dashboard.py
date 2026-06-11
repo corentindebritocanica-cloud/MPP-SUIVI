@@ -11,29 +11,46 @@ LEAGUES_URL = f"{API_BASE_URL}/leagues"
 
 def main():
     if not EMAIL or not PASSWORD:
-        print("Erreur : Identifiants manquants.")
+        print("Erreur : Identifiants manquants (Secrets non trouvés).")
         return
 
     session = requests.Session()
     
+    # On ajoute des "Headers" pour faire croire à MPP que l'on est un vrai navigateur Chrome
+    headers = {
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Accept": "application/json, text/plain, */*",
+        "Origin": "https://mpp.football",
+        "Referer": "https://mpp.football/"
+    }
+    
+    print("Tentative de connexion à MPP...")
+    
     # 1. Connexion
-    response = session.post(LOGIN_URL, json={"email": EMAIL, "password": PASSWORD}, headers={"Content-Type": "application/json"})
+    response = session.post(LOGIN_URL, json={"email": EMAIL, "password": PASSWORD}, headers=headers)
+    
     if response.status_code != 200:
-        print("Échec de connexion.")
+        print(f"Échec de connexion. Code HTTP : {response.status_code}")
+        print(f"Message de l'API : {response.text}")
         return
         
+    print("Connexion réussie ! Récupération du Token...")
     token = response.headers.get("Authorization") or response.json().get("token")
     session.headers.update({"Authorization": token})
 
     # 2. Récupération des ligues
+    print("Récupération des ligues...")
     leagues_response = session.get(LEAGUES_URL) 
     if leagues_response.status_code != 200:
+        print(f"Impossible de récupérer les ligues. Code: {leagues_response.status_code}")
         return
         
     leagues_data = leagues_response.json().get("leagues", [])
     dashboard_data = []
 
     # 3. Extraction des classements
+    print(f"{len(leagues_data)} ligues trouvées. Scan en cours...")
     for lg in leagues_data:
         rank_res = session.get(f"{API_BASE_URL}/leagues/{lg.get('id')}/ranking")
         if rank_res.status_code == 200:
@@ -59,8 +76,8 @@ def generate_html(data):
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard MPP</title>
     <style>
-        body {{ font-family: sans-serif; background: #f4f7f6; padding: 20px; }}
-        table {{ width: 100%; border-collapse: collapse; background: white; }}
+        body {{ font-family: sans-serif; background: #f4f7f6; padding: 20px; margin: 0; }}
+        table {{ width: 100%; border-collapse: collapse; background: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; }}
         th, td {{ padding: 12px; border-bottom: 1px solid #eee; text-align: left; }}
         th {{ background: #11b374; color: white; }}
         .badge {{ background: #11b374; color: white; padding: 4px 8px; border-radius: 12px; font-weight: bold; }}
@@ -69,8 +86,8 @@ def generate_html(data):
 </head>
 <body>
     <div style="max-width: 800px; margin: auto;">
-        <h1 style="color: #11b374; text-align: center;">🏆 Mes Ligues MPP</h1>
-        <p style="text-align: center; color: #666; font-size: 12px;">MAJ : {now}</p>
+        <h1 style="color: #11b374; text-align: center;">🏆 Mes Ligues MPP 2026</h1>
+        <p style="text-align: center; color: #666; font-size: 12px;">Dernière mise à jour : {now}</p>
         <table>
             <tr><th>Ligue</th><th>Rang</th><th>Points</th></tr>"""
             
@@ -82,6 +99,7 @@ def generate_html(data):
     
     with open("index.html", "w", encoding="utf-8") as f:
         f.write(html)
+    print("Fichier index.html généré avec succès !")
 
 if __name__ == "__main__":
     main()
