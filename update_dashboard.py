@@ -3,62 +3,43 @@ import requests
 from datetime import datetime
 
 EMAIL = os.environ.get("MPP_EMAIL")
-PASSWORD = os.environ.get("MPP_PASSWORD")
+REFRESH_TOKEN = os.environ.get("MPP_REFRESH_TOKEN")
 
-# Les adresses secrètes du combo de connexion
-LOGIN_URL = "https://europe-west1-mpg-workers.cloudfunctions.net/session-v2"
+# L'adresse pour générer des clés toutes neuves avec le Refresh Token
 TOKEN_URL = "https://connect.ligue1.fr/oauth/token"
-
-# L'adresse de l'API pour récupérer les classements
 API_BASE_URL = "https://api.mpg.football"
 LEAGUES_URL = f"{API_BASE_URL}/leagues"
 
 def main():
-    if not EMAIL or not PASSWORD:
-        print("Erreur : Identifiants manquants (Secrets non trouvés).")
+    if not EMAIL or not REFRESH_TOKEN:
+        print("Erreur : Identifiants ou Refresh Token manquants.")
         return
 
-    # requests.Session() est magique : il garde les cookies de l'étape 1 pour l'étape 2 automatiquement
     session = requests.Session()
     
-    headers = {
-        "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-        "Accept": "application/json, text/plain, */*",
-        "Origin": "https://mpp.football",
-        "Referer": "https://mpp.football/"
+    print("Demande de jeton d'accès via le Refresh Token...")
+    # On utilise le client_id public que tu as trouvé dans ton Payload
+    payload = {
+        "client_id": "grX5jWGWWQ4Uq91oe7KPNDZ96FS3jr0X",
+        "grant_type": "refresh_token",
+        "refresh_token": REFRESH_TOKEN
     }
     
-    # --- ÉTAPE 1 : Validation des identifiants ---
-    print("Étape 1 : Ouverture de session...")
-    res_login = session.post(LOGIN_URL, json={"email": EMAIL, "password": PASSWORD}, headers=headers)
-    
-    if res_login.status_code != 200:
-        print(f"Échec de connexion (Étape 1). Code HTTP : {res_login.status_code}")
-        return
-        
-    # --- ÉTAPE 2 : Récupération du jeton (Token) ---
-    print("Étape 2 : Récupération du jeton d'accès...")
-    # On fait un POST sur la nouvelle URL que tu as trouvée
-    res_token = session.post(TOKEN_URL, headers=headers)
+    res_token = session.post(TOKEN_URL, json=payload)
     
     if res_token.status_code != 200:
-        print(f"Échec de la récupération du token (Étape 2). Code HTTP : {res_token.status_code}")
+        print(f"Échec de la récupération du token. Code : {res_token.status_code}")
+        print(res_token.text)
         return
         
+    # On récupère le fameux pass !
     token_data = res_token.json()
-    # On récupère le id_token comme tu l'as vu dans la Preview
     token = token_data.get("id_token") or token_data.get("access_token")
     
-    if not token:
-        print("Erreur : Jeton introuvable dans la réponse finale.")
-        return
-        
-    # On accroche le jeton au pass du robot pour l'API MPP
     session.headers.update({"Authorization": f"Bearer {token}"})
-    print("Authentification réussie à 100% !")
+    print("Authentification réussie ! La porte est grande ouverte.")
 
-    # --- ÉTAPE 3 : Récupération des ligues ---
+    # --- Récupération des ligues ---
     print("Récupération des ligues...")
     leagues_response = session.get(LEAGUES_URL) 
     if leagues_response.status_code != 200:
@@ -68,8 +49,8 @@ def main():
     leagues_data = leagues_response.json().get("leagues", [])
     dashboard_data = []
 
-    # --- ÉTAPE 4 : Extraction des classements ---
-    print(f"{len(leagues_data)} ligues trouvées. Scan des classements...")
+    # --- Extraction des classements ---
+    print(f"{len(leagues_data)} ligues trouvées. Scan des classements en cours...")
     for lg in leagues_data:
         rank_res = session.get(f"{API_BASE_URL}/leagues/{lg.get('id')}/ranking")
         if rank_res.status_code == 200:
