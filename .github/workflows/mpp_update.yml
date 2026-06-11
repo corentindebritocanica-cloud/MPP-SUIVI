@@ -2,8 +2,13 @@ name: Update MPP Dashboard
 
 on:
   schedule:
-    - cron: '0 */4 * * *' # Toutes les 4 heures
-  workflow_dispatch: # Bouton manuel
+    - cron: '0 */4 * * *'
+  workflow_dispatch:
+
+# --- LA LIGNE À AJOUTER EST ICI ---
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+# ----------------------------------
 
 permissions:
   contents: write
