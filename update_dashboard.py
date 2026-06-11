@@ -5,8 +5,11 @@ from datetime import datetime
 EMAIL = os.environ.get("MPP_EMAIL")
 PASSWORD = os.environ.get("MPP_PASSWORD")
 
+# La nouvelle adresse de connexion que tu as trouvée !
+LOGIN_URL = "https://europe-west1-mpg-workers.cloudfunctions.net/session-v2"
+
+# Le reste de l'API pour les ligues et classements
 API_BASE_URL = "https://api.mpg.football"
-LOGIN_URL = f"{API_BASE_URL}/users/sign_in"
 LEAGUES_URL = f"{API_BASE_URL}/leagues"
 
 def main():
@@ -16,7 +19,6 @@ def main():
 
     session = requests.Session()
     
-    # On ajoute des "Headers" pour faire croire à MPP que l'on est un vrai navigateur Chrome
     headers = {
         "Content-Type": "application/json",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
@@ -25,9 +27,9 @@ def main():
         "Referer": "https://mpp.football/"
     }
     
-    print("Tentative de connexion à MPP...")
+    print("Tentative de connexion à MPP via la Cloud Function...")
     
-    # 1. Connexion
+    # 1. Connexion (Envoi de l'email et du mot de passe)
     response = session.post(LOGIN_URL, json={"email": EMAIL, "password": PASSWORD}, headers=headers)
     
     if response.status_code != 200:
@@ -35,8 +37,21 @@ def main():
         print(f"Message de l'API : {response.text}")
         return
         
-    print("Connexion réussie ! Récupération du Token...")
-    token = response.headers.get("Authorization") or response.json().get("token")
+    print("Connexion réussie ! Extraction du Token...")
+    
+    # Extraction du token (on cherche partout : headers ou corps JSON)
+    token = response.headers.get("Authorization")
+    if not token and response.text:
+        try:
+            res_json = response.json()
+            token = res_json.get("token") or res_json.get("accessToken") or res_json.get("idToken")
+        except Exception:
+            pass
+            
+    if not token:
+        print("Erreur : Impossible de trouver le jeton d'authentification dans la réponse.")
+        return
+        
     session.headers.update({"Authorization": token})
 
     # 2. Récupération des ligues
@@ -50,7 +65,7 @@ def main():
     dashboard_data = []
 
     # 3. Extraction des classements
-    print(f"{len(leagues_data)} ligues trouvées. Scan en cours...")
+    print(f"{len(leagues_data)} ligues trouvées. Scan des classements...")
     for lg in leagues_data:
         rank_res = session.get(f"{API_BASE_URL}/leagues/{lg.get('id')}/ranking")
         if rank_res.status_code == 200:
