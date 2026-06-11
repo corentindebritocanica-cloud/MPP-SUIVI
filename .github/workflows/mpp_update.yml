@@ -28,7 +28,7 @@ jobs:
       
       - env:
           MPP_EMAIL: ${{ secrets.MPP_EMAIL }}
-          MPP_PASSWORD: ${{ secrets.MPP_PASSWORD }}
+          MPP_REFRESH_TOKEN: ${{ secrets.MPP_REFRESH_TOKEN }}
         run: python update_dashboard.py
         
       - uses: actions/configure-pages@v4
