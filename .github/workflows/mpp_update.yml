@@ -2,13 +2,12 @@ name: Update MPP Dashboard
 
 on:
   schedule:
-    - cron: '0 */4 * * *'
-  workflow_dispatch:
+    - cron: '0 */4 * * *' # S'exécute toutes les 4 heures
+  workflow_dispatch: # Permet de lancer manuellement
 
-# --- LA LIGNE À AJOUTER EST ICI ---
+# Correction pour forcer l'utilisation de Node.js 24 et retirer l'avertissement
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-# ----------------------------------
 
 permissions:
   contents: write
@@ -20,16 +19,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
       - uses: actions/setup-python@v5
         with:
           python-version: '3.x'
+          
       - run: pip install requests
+      
       - env:
           MPP_EMAIL: ${{ secrets.MPP_EMAIL }}
           MPP_PASSWORD: ${{ secrets.MPP_PASSWORD }}
         run: python update_dashboard.py
+        
       - uses: actions/configure-pages@v4
+      
       - uses: actions/upload-pages-artifact@v3
         with:
           path: '.'
+          
       - uses: actions/deploy-pages@v4
