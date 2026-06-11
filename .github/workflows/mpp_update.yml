@@ -1,0 +1,30 @@
+name: Update MPP Dashboard
+
+on:
+  schedule:
+    - cron: '0 */4 * * *' # Toutes les 4 heures
+  workflow_dispatch: # Bouton manuel
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - run: pip install requests
+      - env:
+          MPP_EMAIL: ${{ secrets.MPP_EMAIL }}
+          MPP_PASSWORD: ${{ secrets.MPP_PASSWORD }}
+        run: python update_dashboard.py
+      - uses: actions/configure-pages@v4
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+      - uses: actions/deploy-pages@v4
