@@ -26,9 +26,6 @@ def main():
         return
         
     token = res_token.json().get("access_token")
-    if not token:
-        print("Erreur : Impossible de trouver l'access_token.")
-        return
 
     session.headers.update({
         "Authorization": f"Bearer {token}",
@@ -43,19 +40,16 @@ def main():
     res_contests = session.get(f"{API_BASE_URL}/user-contests")
     
     if res_contests.status_code != 200:
-        print(f"Impossible de charger les ligues : {res_contests.status_code}")
+        print("Impossible de charger les ligues.")
         return
 
-    data = res_contests.json()
-    contests = data.get("contestsCards", [])
-
+    contests = res_contests.json().get("contestsCards", [])
     dashboard_data = []
 
-    # --- Etape 3 : Extraction ultra-rapide et profonde ---
+    # --- Etape 3 : Extraction chirurgicale ---
     print(f"{len(contests)} ligues trouvées ! Extraction de tes scores...")
     for c in contests:
         c_id = c.get("contestId")
-        c_name = c.get("name") or c.get("contestName") or c.get("shortContestId") or "Ma Ligue"
         
         if not c_id:
             continue
@@ -64,34 +58,23 @@ def main():
         rank_res = session.get(rank_url)
         
         if rank_res.status_code == 200:
-            raw_data = rank_res.json()
+            challenge_data = rank_res.json()
             
-            # --- CORRECTION ---
-            # Le JSON de MPP est souvent caché dans une clé (ex: "1": {...})
-            challenge_info = raw_data
-            if isinstance(raw_data, dict) and "userDetails" not in raw_data:
-                # On fouille dans les sous-catégories pour trouver le graal
-                for val in raw_data.values():
-                    if isinstance(val, dict) and "userDetails" in val:
-                        challenge_info = val
-                        break
+            # On utilise les étiquettes EXACTES de ton JSON !
+            c_name = challenge_data.get("name", "Ligue Inconnue")
+            user_rank = challenge_data.get("currentUserRank")
+            total_players = challenge_data.get("usersQuantity", "?")
             
-            # On lit ton score fourni par l'API
-            user_details = challenge_info.get("userDetails")
-            
-            if user_details:
-                user_rank = user_details.get("rank", 0)
-                user_points = user_details.get("points", 0)
-                total_players = challenge_info.get("usersQuantity", "?")
-                
+            # Si le site nous donne bien ton rang, on ajoute la ligue au tableau
+            if user_rank is not None:
                 dashboard_data.append({
                     "name": c_name,
                     "rank": user_rank,
                     "total": total_players,
-                    "pts": user_points
+                    "pts": "-"  # Affichage d'un tiret car l'API n'inclut pas les points dans cet appel
                 })
 
-    # Tri par ton meilleur rang
+    # Tri pour afficher tes meilleurs classements en premier
     dashboard_data.sort(key=lambda x: x["rank"])
     generate_html(dashboard_data)
 
@@ -122,7 +105,7 @@ def generate_html(data):
             
     for r in data:
         badge = "badge top-3" if r['rank'] <= 3 else "badge"
-        html += f"<tr><td><b>{r['name']}</b></td><td><span class='{badge}'>{r['rank']} / {r['total']}</span></td><td class='pts'>{r['pts']} pts</td></tr>"
+        html += f"<tr><td><b>{r['name']}</b></td><td><span class='{badge}'>{r['rank']} / {r['total']}</span></td><td class='pts'>{r['pts']}</td></tr>"
         
     html += "</table></div></body></html>"
     
