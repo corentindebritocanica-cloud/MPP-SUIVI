@@ -2,22 +2,19 @@ import os
 import requests
 from datetime import datetime
 
-# Tes secrets GitHub (Garde bien MPP_EMAIL et MPP_REFRESH_TOKEN configurés)
 EMAIL = os.environ.get("MPP_EMAIL")
 REFRESH_TOKEN = os.environ.get("MPP_REFRESH_TOKEN")
 
-# Les URLs exactes que tu as trouvées !
 TOKEN_URL = "https://connect.ligue1.fr/oauth/token"
 API_BASE_URL = "https://api.mpp.football"
 
 def main():
     if not REFRESH_TOKEN or not EMAIL:
-        print("Erreur : Email ou Refresh Token manquant dans les secrets GitHub.")
+        print("Erreur : Email ou Refresh Token manquant.")
         return
 
     session = requests.Session()
     
-    # --- Etape 1 : Authentification Forte ---
     print("Étape 1 : Génération du jeton d'accès via Ligue 1...")
     payload = {
         "client_id": "grX5jWGWWQ4Uq91oe7KPNDZ96FS3jr0X",
@@ -30,14 +27,20 @@ def main():
         print(f"Erreur d'authentification : {res_token.status_code} - {res_token.text}")
         return
         
-    token = res_token.json().get("id_token") or res_token.json().get("access_token")
+    # LA CORRECTION EST ICI : On force le script à prendre l'access_token !
+    token_data = res_token.json()
+    token = token_data.get("access_token") 
     
-    # On équipe le robot avec le jeton et un déguisement de navigateur
+    if not token:
+        print("Erreur : Impossible de trouver l'access_token.")
+        return
+
     session.headers.update({
         "Authorization": f"Bearer {token}",
         "Origin": "https://mpp.football",
         "Referer": "https://mpp.football/",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Accept": "application/json"
     })
     print("Authentification réussie !")
 
@@ -50,12 +53,10 @@ def main():
         print(f"Impossible de charger les ligues : {res_contests.status_code} - {res_contests.text}")
         return
 
-    # Le JSON peut être une liste directe, ou dans une clé "contests" ou "data"
     data_contests = res_contests.json()
     if isinstance(data_contests, list):
         contests = data_contests
     else:
-        # On cherche la première liste disponible dans le JSON
         contests = next((val for val in data_contests.values() if isinstance(val, list)), [])
 
     dashboard_data = []
@@ -63,33 +64,27 @@ def main():
     # --- Etape 3 : Scan des classements ---
     print(f"{len(contests)} ligues trouvées ! Scan des classements en cours...")
     for c in contests:
-        # L'ID s'appelle souvent id, challengeId ou contestId
         c_id = c.get("id") or c.get("challengeId")
         c_name = c.get("name") or c.get("challengeName") or "Compétition"
         
         if not c_id:
             continue
             
-        # L'URL exacte du classement que tu as trouvée
         rank_url = f"{API_BASE_URL}/challenge/{c_id}"
         rank_res = session.get(rank_url)
         
         if rank_res.status_code == 200:
             challenge_data = rank_res.json()
-            # On cherche le tableau des joueurs (ranking, users ou leaderboard)
             ranking = []
             if isinstance(challenge_data, list):
                 ranking = challenge_data
             elif isinstance(challenge_data, dict):
                 ranking = challenge_data.get("ranking") or challenge_data.get("users") or challenge_data.get("leaderboard") or []
 
-            # On trie la liste par points (au cas où elle ne le serait pas par défaut)
             ranking.sort(key=lambda x: x.get("points", x.get("score", 0)), reverse=True)
 
             for pos, user in enumerate(ranking, start=1):
-                # On cherche ta ligne dans le classement
                 if user.get("email") == EMAIL or user.get("isMe") is True or user.get("is_me") is True:
-                    # Sécurité : on prend ton rang s'il est fourni, sinon on prend ta position dans la liste
                     user_rank = user.get("rank") or pos
                     user_points = user.get("points") or user.get("score") or 0
                     
@@ -101,14 +96,10 @@ def main():
                     })
                     break
 
-    # On trie ton dashboard pour afficher tes meilleurs classements en premier !
     dashboard_data.sort(key=lambda x: x["rank"])
     generate_html(dashboard_data)
 
 def generate_html(data):
-    if not data:
-        print("Avertissement : Aucune donnée trouvée. Le tableau sera vide.")
-        
     now = datetime.now().strftime("%d/%m/%Y à %H:%M")
     html = f"""<!DOCTYPE html>
 <html lang="fr">
@@ -134,7 +125,6 @@ def generate_html(data):
             <tr><th>Ligue</th><th>Rang</th><th>Points</th></tr>"""
             
     for r in data:
-        # Si tu es sur le podium, la couleur change en or !
         badge = "badge top-3" if r['rank'] <= 3 else "badge"
         html += f"<tr><td><b>{r['name']}</b></td><td><span class='{badge}'>{r['rank']} / {r['total']}</span></td><td class='pts'>{r['pts']} pts</td></tr>"
         
