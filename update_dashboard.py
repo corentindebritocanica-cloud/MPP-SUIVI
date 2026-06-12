@@ -51,7 +51,7 @@ def main():
 
     dashboard_data = []
 
-    # --- Etape 3 : Extraction ultra-rapide ---
+    # --- Etape 3 : Extraction ultra-rapide et profonde ---
     print(f"{len(contests)} ligues trouvées ! Extraction de tes scores...")
     for c in contests:
         c_id = c.get("contestId")
@@ -64,19 +64,25 @@ def main():
         rank_res = session.get(rank_url)
         
         if rank_res.status_code == 200:
-            challenge_data = rank_res.json()
+            raw_data = rank_res.json()
             
-            # On met à jour le nom si on le trouve
-            c_name = challenge_data.get("name") or challenge_data.get("challengeName") or c_name
+            # --- CORRECTION ---
+            # Le JSON de MPP est souvent caché dans une clé (ex: "1": {...})
+            challenge_info = raw_data
+            if isinstance(raw_data, dict) and "userDetails" not in raw_data:
+                # On fouille dans les sous-catégories pour trouver le graal
+                for val in raw_data.values():
+                    if isinstance(val, dict) and "userDetails" in val:
+                        challenge_info = val
+                        break
             
-            # --- LA MAGIE EST ICI ---
-            # On lit directement ton score fourni par l'API !
-            user_details = challenge_data.get("userDetails")
+            # On lit ton score fourni par l'API
+            user_details = challenge_info.get("userDetails")
             
             if user_details:
                 user_rank = user_details.get("rank", 0)
                 user_points = user_details.get("points", 0)
-                total_players = challenge_data.get("usersQuantity", "?")
+                total_players = challenge_info.get("usersQuantity", "?")
                 
                 dashboard_data.append({
                     "name": c_name,
