@@ -2,20 +2,18 @@ import os
 import requests
 from datetime import datetime
 
-EMAIL = os.environ.get("MPP_EMAIL")
 REFRESH_TOKEN = os.environ.get("MPP_REFRESH_TOKEN")
-
 TOKEN_URL = "https://connect.ligue1.fr/oauth/token"
 API_BASE_URL = "https://api.mpp.football"
 
 def main():
-    if not REFRESH_TOKEN or not EMAIL:
-        print("Erreur : Email ou Refresh Token manquant.")
+    if not REFRESH_TOKEN:
+        print("Erreur : Refresh Token manquant.")
         return
 
     session = requests.Session()
     
-    print("Étape 1 : Génération du jeton d'accès via Ligue 1...")
+    print("Étape 1 : Authentification...")
     payload = {
         "client_id": "grX5jWGWWQ4Uq91oe7KPNDZ96FS3jr0X",
         "grant_type": "refresh_token",
@@ -24,13 +22,10 @@ def main():
     
     res_token = session.post(TOKEN_URL, json=payload)
     if res_token.status_code != 200:
-        print(f"Erreur d'authentification : {res_token.status_code} - {res_token.text}")
+        print(f"Erreur d'authentification : {res_token.status_code}")
         return
         
-    # LA CORRECTION EST ICI : On force le script à prendre l'access_token !
-    token_data = res_token.json()
-    token = token_data.get("access_token") 
-    
+    token = res_token.json().get("access_token")
     if not token:
         print("Erreur : Impossible de trouver l'access_token.")
         return
@@ -42,30 +37,25 @@ def main():
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
         "Accept": "application/json"
     })
-    print("Authentification réussie !")
-
+    
     # --- Etape 2 : Récupération de tes ligues ---
     print("Étape 2 : Récupération de tes ligues...")
-    contests_url = f"{API_BASE_URL}/user-contests"
-    res_contests = session.get(contests_url)
+    res_contests = session.get(f"{API_BASE_URL}/user-contests")
     
     if res_contests.status_code != 200:
-        print(f"Impossible de charger les ligues : {res_contests.status_code} - {res_contests.text}")
+        print(f"Impossible de charger les ligues : {res_contests.status_code}")
         return
 
-    data_contests = res_contests.json()
-    if isinstance(data_contests, list):
-        contests = data_contests
-    else:
-        contests = next((val for val in data_contests.values() if isinstance(val, list)), [])
+    data = res_contests.json()
+    contests = data.get("contestsCards", [])
 
     dashboard_data = []
 
-    # --- Etape 3 : Scan des classements ---
-    print(f"{len(contests)} ligues trouvées ! Scan des classements en cours...")
+    # --- Etape 3 : Extraction ultra-rapide ---
+    print(f"{len(contests)} ligues trouvées ! Extraction de tes scores...")
     for c in contests:
-        c_id = c.get("id") or c.get("challengeId")
-        c_name = c.get("name") or c.get("challengeName") or "Compétition"
+        c_id = c.get("contestId")
+        c_name = c.get("name") or c.get("contestName") or c.get("shortContestId") or "Ma Ligue"
         
         if not c_id:
             continue
@@ -75,27 +65,27 @@ def main():
         
         if rank_res.status_code == 200:
             challenge_data = rank_res.json()
-            ranking = []
-            if isinstance(challenge_data, list):
-                ranking = challenge_data
-            elif isinstance(challenge_data, dict):
-                ranking = challenge_data.get("ranking") or challenge_data.get("users") or challenge_data.get("leaderboard") or []
+            
+            # On met à jour le nom si on le trouve
+            c_name = challenge_data.get("name") or challenge_data.get("challengeName") or c_name
+            
+            # --- LA MAGIE EST ICI ---
+            # On lit directement ton score fourni par l'API !
+            user_details = challenge_data.get("userDetails")
+            
+            if user_details:
+                user_rank = user_details.get("rank", 0)
+                user_points = user_details.get("points", 0)
+                total_players = challenge_data.get("usersQuantity", "?")
+                
+                dashboard_data.append({
+                    "name": c_name,
+                    "rank": user_rank,
+                    "total": total_players,
+                    "pts": user_points
+                })
 
-            ranking.sort(key=lambda x: x.get("points", x.get("score", 0)), reverse=True)
-
-            for pos, user in enumerate(ranking, start=1):
-                if user.get("email") == EMAIL or user.get("isMe") is True or user.get("is_me") is True:
-                    user_rank = user.get("rank") or pos
-                    user_points = user.get("points") or user.get("score") or 0
-                    
-                    dashboard_data.append({
-                        "name": c_name,
-                        "rank": user_rank,
-                        "total": len(ranking),
-                        "pts": user_points
-                    })
-                    break
-
+    # Tri par ton meilleur rang
     dashboard_data.sort(key=lambda x: x["rank"])
     generate_html(dashboard_data)
 
@@ -132,7 +122,7 @@ def generate_html(data):
     
     with open("index.html", "w", encoding="utf-8") as f:
         f.write(html)
-    print("Fichier index.html généré avec succès !")
+    print(f"Fichier index.html généré avec succès ! ({len(data)} ligues intégrées au tableau)")
 
 if __name__ == "__main__":
     main()
