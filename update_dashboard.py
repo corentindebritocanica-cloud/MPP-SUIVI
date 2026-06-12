@@ -35,7 +35,6 @@ def main():
         "Accept": "application/json"
     })
     
-    # --- Etape 2 : Récupération de tes ligues ---
     print("Étape 2 : Récupération de tes ligues...")
     res_contests = session.get(f"{API_BASE_URL}/user-contests")
     
@@ -46,8 +45,7 @@ def main():
     contests = res_contests.json().get("contestsCards", [])
     dashboard_data = []
 
-    # --- Etape 3 : Extraction chirurgicale ---
-    print(f"{len(contests)} ligues trouvées ! Extraction de tes scores...")
+    print(f"Extraction des scores en cours...")
     for c in contests:
         c_id = c.get("contestId")
         
@@ -60,22 +58,45 @@ def main():
         if rank_res.status_code == 200:
             challenge_data = rank_res.json()
             
-            # On utilise les étiquettes EXACTES de ton JSON !
             c_name = challenge_data.get("name", "Ligue Inconnue")
+            
+            # --- 1. Ignorer la ligue "GLS Tournefeuille" ---
+            if c_name == "GLS Tournefeuille":
+                continue
+
             user_rank = challenge_data.get("currentUserRank")
             total_players = challenge_data.get("usersQuantity", "?")
             
-            # Si le site nous donne bien ton rang, on ajoute la ligue au tableau
+            # --- 2. Chasse aux points ---
+            # On tente toutes les clés possibles utilisées par l'API
+            user_points = (
+                challenge_data.get("currentUserScore") or 
+                challenge_data.get("currentUserPoints") or 
+                challenge_data.get("score") or 
+                challenge_data.get("points")
+            )
+            
+            # Si toujours vide, on fouille dans userDetails si ça existe
+            if user_points is None and isinstance(challenge_data.get("userDetails"), dict):
+                user_points = challenge_data.get("userDetails").get("points") or challenge_data.get("userDetails").get("score")
+                
+            # Si vraiment rien n'est trouvé
+            if user_points is None:
+                user_points = "-"
+            
             if user_rank is not None:
                 dashboard_data.append({
                     "name": c_name,
                     "rank": user_rank,
                     "total": total_players,
-                    "pts": "-"  # Affichage d'un tiret car l'API n'inclut pas les points dans cet appel
+                    "pts": user_points
                 })
 
-    # Tri pour afficher tes meilleurs classements en premier
-    dashboard_data.sort(key=lambda x: x["rank"])
+    # --- 3. Tri sur-mesure ---
+    # x["name"] != "GLS Tournefeuille CDM2026" renvoie False (0) pour la ligue favorite, et True (1) pour les autres.
+    # Ainsi, la ligue favorite se retrouve tout en haut (position 0), et le reste est trié par le rang (x["rank"]).
+    dashboard_data.sort(key=lambda x: (x["name"] != "GLS Tournefeuille CDM2026", x["rank"]))
+    
     generate_html(dashboard_data)
 
 def generate_html(data):
@@ -93,6 +114,7 @@ def generate_html(data):
         tr:hover {{ background-color: #f9f9f9; }}
         .badge {{ background: #11b374; color: white; padding: 5px 10px; border-radius: 20px; font-weight: bold; font-size: 14px; }}
         .top-3 {{ background: #ffd700; color: #333; }}
+        .favorite {{ background-color: #e8f7f1; }} /* Légère couleur de fond pour la ligue favorite */
         .pts {{ font-weight: bold; color: #444; }}
     </style>
 </head>
@@ -105,7 +127,9 @@ def generate_html(data):
             
     for r in data:
         badge = "badge top-3" if r['rank'] <= 3 else "badge"
-        html += f"<tr><td><b>{r['name']}</b></td><td><span class='{badge}'>{r['rank']} / {r['total']}</span></td><td class='pts'>{r['pts']}</td></tr>"
+        row_class = "favorite" if r['name'] == "GLS Tournefeuille CDM2026" else ""
+        
+        html += f"<tr class='{row_class}'><td><b>{r['name']}</b></td><td><span class='{badge}'>{r['rank']} / {r['total']}</span></td><td class='pts'>{r['pts']}</td></tr>"
         
     html += "</table></div></body></html>"
     
