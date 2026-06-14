@@ -28,7 +28,7 @@
 
         .container {
             width: 100%;
-            max-width: 420px;
+            max-width: 450px; /* Légèrement élargi pour la double devise */
         }
 
         .header {
@@ -43,15 +43,21 @@
             font-weight: normal;
         }
 
-        .total-value {
+        .total-value-usd {
             font-size: 42px;
             font-weight: bold;
             margin: 0;
         }
 
+        .total-value-eur {
+            font-size: 24px;
+            color: var(--text-muted);
+            margin-top: 5px;
+            margin-bottom: 10px;
+        }
+
         .total-pl {
             font-size: 16px;
-            margin-top: 5px;
             font-weight: 500;
         }
 
@@ -104,6 +110,12 @@
             font-weight: 500;
         }
 
+        .eur-text {
+            color: var(--text-muted);
+            font-size: 0.85em;
+            font-weight: normal;
+        }
+
         .strategy-box {
             background-color: rgba(11, 20, 38, 0.5);
             border-radius: 8px;
@@ -137,11 +149,12 @@
         .up { color: var(--green); }
         .down { color: var(--red); }
         
-        .last-update {
+        .footer-info {
             text-align: center;
             font-size: 12px;
             color: var(--text-muted);
             margin-top: 20px;
+            line-height: 1.6;
         }
     </style>
 </head>
@@ -149,20 +162,23 @@
 
     <div class="container">
         <div class="header">
-            <h1>Solde du Portefeuille (USD)</h1>
-            <div id="total-value" class="total-value">Chargement...</div>
+            <h1>Solde du Portefeuille</h1>
+            <div id="total-value-usd" class="total-value-usd">Chargement...</div>
+            <div id="total-value-eur" class="total-value-eur">-- €</div>
             <div id="total-pl" class="total-pl">--</div>
         </div>
 
         <div id="assets-container">
-            <!-- Injecté via JS -->
-        </div>
+            </div>
 
-        <div class="last-update" id="last-update">Dernière mise à jour : --</div>
+        <div class="footer-info">
+            <div id="exchange-rate-display">Taux EUR/USD : --</div>
+            <div id="last-update">Dernière mise à jour : --</div>
+        </div>
     </div>
 
     <script>
-        // 🚨 CLÉ API (Finnhub)
+        // 🚨 CLÉ API (Finnhub) pour les actions
         const API_KEY = 'demo'; 
 
         const portfolio = [
@@ -171,24 +187,36 @@
             { ticker: 'NVDA', name: 'NVIDIA', shares: 0.34674018, pru: 210.04 }
         ];
 
-        // Définition de notre plan de match pour chaque ligne
         const strategies = {
             'TTWO': { 
                 title: '🎯 ORDRE LIMIT EN ATTENTE', 
-                desc: 'Vente automatique de 1 part programmée à 250$.',
+                desc: 'Vente de 1 part auto. à 250$.',
                 targetPrice: 250 
             },
             'SPCX': { 
                 title: '💎 COFFRE-FORT (HOLD)', 
-                desc: 'Objectif Jackpot long terme (3 à 10 ans).',
+                desc: 'Objectif Jackpot long terme.',
                 targetPrice: null 
             },
             'NVDA': { 
                 title: '⏳ EN SOMMEIL (HOLD)', 
-                desc: 'Attente déclenchement TTWO pour renforcer la ligne.',
+                desc: 'Attente du cash TTWO pour renforcer.',
                 targetPrice: null 
             }
         };
+
+        // Fonction pour récupérer le taux de change USD vers EUR
+        async function fetchExchangeRate() {
+            try {
+                // Utilisation d'une API gratuite sans clé pour les devises
+                const response = await fetch('https://open.er-api.com/v6/latest/USD');
+                const data = await response.json();
+                return data.rates.EUR;
+            } catch (error) {
+                console.error("Erreur taux de change:", error);
+                return 0.93; // Taux de secours approximatif en cas d'échec de l'API
+            }
+        }
 
         async function fetchPrice(ticker) {
             try {
@@ -206,37 +234,44 @@
         }
 
         async function updateDashboard() {
+            // 1. Récupération du taux de change en premier
+            const eurRate = await fetchExchangeRate();
+            document.getElementById('exchange-rate-display').innerText = `1 USD = ${eurRate.toFixed(4)} EUR`;
+
             const container = document.getElementById('assets-container');
             container.innerHTML = ''; 
 
-            let totalInvested = 0;
-            let totalCurrentValue = 0;
+            let totalInvestedUsd = 0;
+            let totalCurrentValueUsd = 0;
 
             for (const asset of portfolio) {
-                const currentPrice = await fetchPrice(asset.ticker);
-                const priceToUse = currentPrice || asset.pru; 
+                const currentPriceUsd = await fetchPrice(asset.ticker);
+                const priceToUseUsd = currentPriceUsd || asset.pru; 
 
-                const investedValue = asset.shares * asset.pru;
-                const currentValue = asset.shares * priceToUse;
-                
-                const plValue = currentValue - investedValue;
-                const plPercent = (plValue / investedValue) * 100;
+                // Calculs en USD
+                const investedValueUsd = asset.shares * asset.pru;
+                const currentValueUsd = asset.shares * priceToUseUsd;
+                const plValueUsd = currentValueUsd - investedValueUsd;
+                const plPercent = (plValueUsd / investedValueUsd) * 100;
 
-                totalInvested += investedValue;
-                totalCurrentValue += currentValue;
+                // Conversion en EUR
+                const priceToUseEur = priceToUseUsd * eurRate;
+                const plValueEur = plValueUsd * eurRate;
 
-                const isUp = plValue >= 0;
+                totalInvestedUsd += investedValueUsd;
+                totalCurrentValueUsd += currentValueUsd;
+
+                const isUp = plValueUsd >= 0;
                 const colorClass = isUp ? 'up' : 'down';
                 const sign = isUp ? '+' : '';
 
                 const strat = strategies[asset.ticker];
                 let progressHtml = '';
 
-                // Calcul de la barre de progression uniquement pour les actions avec un objectif (ex: TTWO)
                 if (strat.targetPrice) {
-                    const progress = Math.min((priceToUse / strat.targetPrice) * 100, 100);
+                    const progress = Math.min((priceToUseUsd / strat.targetPrice) * 100, 100);
                     progressHtml = `
-                        <div style="font-size: 11px; margin-top: 8px; color: #8b9bb4;">Progression vers l'objectif : ${progress.toFixed(1)}%</div>
+                        <div style="font-size: 11px; margin-top: 8px; color: #8b9bb4;">Progression (Cible: ${strat.targetPrice}$) : ${progress.toFixed(1)}%</div>
                         <div class="progress-container">
                             <div class="progress-bar" style="width: ${progress}%;"></div>
                         </div>
@@ -252,8 +287,8 @@
                             <span class="asset-shares">${asset.shares.toFixed(4)} parts</span>
                         </div>
                         <div class="asset-numbers">
-                            <span class="asset-price">${priceToUse.toFixed(2)} $</span>
-                            <span class="asset-pl ${colorClass}">${sign}${plValue.toFixed(2)} $ (${sign}${plPercent.toFixed(2)} %)</span>
+                            <span class="asset-price">${priceToUseUsd.toFixed(2)} $ <span class="eur-text">(${priceToUseEur.toFixed(2)} €)</span></span>
+                            <span class="asset-pl ${colorClass}">${sign}${plValueUsd.toFixed(2)} $ <span class="eur-text">(${sign}${plValueEur.toFixed(2)} €)</span></span>
                         </div>
                     </div>
                     <div class="strategy-box">
@@ -265,24 +300,32 @@
                 container.appendChild(card);
             }
 
-            const totalPlValue = totalCurrentValue - totalInvested;
-            const totalPlPercent = (totalPlValue / totalInvested) * 100;
-            const isTotalUp = totalPlValue >= 0;
+            // Calculs globaux
+            const totalCurrentValueEur = totalCurrentValueUsd * eurRate;
+            const totalPlValueUsd = totalCurrentValueUsd - totalInvestedUsd;
+            const totalPlValueEur = totalPlValueUsd * eurRate;
+            const totalPlPercent = (totalPlValueUsd / totalInvestedUsd) * 100;
+            const isTotalUp = totalPlValueUsd >= 0;
 
-            document.getElementById('total-value').innerText = `${totalCurrentValue.toFixed(2)} $`;
+            // Affichage des Totaux
+            document.getElementById('total-value-usd').innerText = `${totalCurrentValueUsd.toFixed(2)} $`;
+            document.getElementById('total-value-eur').innerText = `~ ${totalCurrentValueEur.toFixed(2)} €`;
             
             const totalPlElement = document.getElementById('total-pl');
-            totalPlElement.innerText = `${isTotalUp ? '+' : ''}${totalPlValue.toFixed(2)} $ (${isTotalUp ? '+' : ''}${totalPlPercent.toFixed(2)} %)`;
+            totalPlElement.innerHTML = `
+                ${isTotalUp ? '+' : ''}${totalPlValueUsd.toFixed(2)} $ 
+                <span class="eur-text">(${isTotalUp ? '+' : ''}${totalPlValueEur.toFixed(2)} €)</span> 
+                | ${isTotalUp ? '+' : ''}${totalPlPercent.toFixed(2)} %
+            `;
             totalPlElement.className = `total-pl ${isTotalUp ? 'up' : 'down'}`;
 
+            // Horodatage
             const now = new Date();
             document.getElementById('last-update').innerText = `Dernière mise à jour : ${now.toLocaleTimeString('fr-FR')}`;
         }
 
         updateDashboard();
-
-        // NOUVEAU : Mise à jour automatique toutes les 1 minute (60 000 millisecondes)
-        setInterval(updateDashboard, 60000);
+        setInterval(updateDashboard, 60000); // Mise à jour toutes les minutes
 
     </script>
 </body>
