@@ -95,11 +95,17 @@
             margin-bottom: 6px;
         }
 
-        /* Nouveau style pour le prix d'achat */
         .asset-pru {
             font-size: 12px;
             color: var(--accent);
             font-weight: 500;
+        }
+        
+        /* Style pour le cours unitaire actuel */
+        .asset-current-price {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
         }
 
         .asset-numbers {
@@ -115,7 +121,6 @@
             margin-bottom: 8px;
         }
         
-        /* Nouveau style pour étiquette Gain/Perte */
         .pl-label {
             font-size: 11px;
             color: var(--text-muted);
@@ -280,7 +285,8 @@
         </div>
 
         <div id="assets-container">
-            </div>
+            <!-- Injecté via JS -->
+        </div>
 
         <div class="footer-info">
             <div id="exchange-rate-display">Taux EUR/USD : --</div>
@@ -288,6 +294,7 @@
         </div>
     </div>
 
+    <!-- Le widget flottant en bas à droite -->
     <div class="spcx-widget">
         <label>Ajuster SPCX</label>
         <input type="number" id="spcx-manual-input" step="0.01" placeholder="Ex: 166.84">
@@ -297,7 +304,6 @@
     <script>
         const API_KEY = 'd8nou8hr01qvvn99oe20d8nou8hr01qvvn99oe2g'; 
 
-        // Ton portefeuille propre (seulement les 3 actions actives)
         const portfolio = [
             { ticker: 'TTWO', name: 'Take-Two', shares: 1.72064278, pru: 211.68 },
             { ticker: 'SPCX', name: 'SpaceX', shares: 1.00000000, pru: 135.00 },
@@ -344,7 +350,6 @@
         }
 
         async function fetchPrice(ticker) {
-            // Coupe-circuit manuel pour SpaceX
             if (ticker === 'SPCX') {
                 return manualSpcxPrice !== null ? manualSpcxPrice : 166.84;
             }
@@ -380,7 +385,8 @@
                 const plValueUsd = currentValueUsd - investedValueUsd;
                 const plPercent = (plValueUsd / investedValueUsd) * 100;
 
-                const priceToUseEur = priceToUseUsd * eurRate;
+                // Calcul de la valeur TOTALE en Euros pour cette position
+                const currentValueEur = currentValueUsd * eurRate;
                 const plValueEur = plValueUsd * eurRate;
 
                 totalInvestedUsd += investedValueUsd;
@@ -407,7 +413,7 @@
                     `;
                 }
 
-                // Construction de la carte avec Prix d'achat et étiquette Gain/Perte explicite
+                // Affichage mis à jour : Valeur totale à droite, détails unitaires à gauche
                 const card = document.createElement('div');
                 card.className = 'asset-card';
                 card.innerHTML = `
@@ -415,10 +421,11 @@
                         <div class="asset-info">
                             <span class="asset-ticker">${asset.ticker}</span>
                             <span class="asset-shares">${asset.shares.toFixed(4)} parts</span>
-                            <span class="asset-pru">Acheté à : ${asset.pru.toFixed(2)} $</span>
+                            <span class="asset-pru">PRU : ${asset.pru.toFixed(2)} $</span>
+                            <span class="asset-current-price">Cours : ${priceToUseUsd.toFixed(2)} $</span>
                         </div>
                         <div class="asset-numbers">
-                            <span class="asset-price">${priceToUseEur.toFixed(2)} € <span class="usd-text">(${priceToUseUsd.toFixed(2)} $)</span></span>
+                            <span class="asset-price">${currentValueEur.toFixed(2)} € <span class="usd-text">(${currentValueUsd.toFixed(2)} $)</span></span>
                             <div class="pl-label">Gain / Perte :</div>
                             <span class="asset-pl ${colorClass}">${sign}${plValueEur.toFixed(2)} € <span class="usd-text">(${sign}${plValueUsd.toFixed(2)} $)</span></span>
                         </div>
