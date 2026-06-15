@@ -28,7 +28,7 @@
 
         .container {
             width: 100%;
-            max-width: 450px; /* Légèrement élargi pour la double devise */
+            max-width: 450px;
         }
 
         .header {
@@ -169,7 +169,8 @@
         </div>
 
         <div id="assets-container">
-            </div>
+            <!-- Injecté via JS -->
+        </div>
 
         <div class="footer-info">
             <div id="exchange-rate-display">Taux EUR/USD : --</div>
@@ -178,8 +179,8 @@
     </div>
 
     <script>
-        // 🚨 CLÉ API (Finnhub) pour les actions
-        const API_KEY = 'demo'; 
+        // Ta clé API Finnhub personnelle
+        const API_KEY = 'd8nou8hr01qvvn99oe20d8nou8hr01qvvn99oe2g'; 
 
         const portfolio = [
             { ticker: 'TTWO', name: 'Take-Two', shares: 1.72064278, pru: 211.68 },
@@ -208,7 +209,6 @@
         // Fonction pour récupérer le taux de change USD vers EUR
         async function fetchExchangeRate() {
             try {
-                // Utilisation d'une API gratuite sans clé pour les devises
                 const response = await fetch('https://open.er-api.com/v6/latest/USD');
                 const data = await response.json();
                 return data.rates.EUR;
@@ -234,7 +234,6 @@
         }
 
         async function updateDashboard() {
-            // 1. Récupération du taux de change en premier
             const eurRate = await fetchExchangeRate();
             document.getElementById('exchange-rate-display').innerText = `1 USD = ${eurRate.toFixed(4)} EUR`;
 
