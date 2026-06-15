@@ -86,12 +86,20 @@
         .asset-ticker {
             font-size: 18px;
             font-weight: bold;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
 
         .asset-shares {
             font-size: 13px;
             color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        /* Nouveau style pour le prix d'achat */
+        .asset-pru {
+            font-size: 12px;
+            color: var(--accent);
+            font-weight: 500;
         }
 
         .asset-numbers {
@@ -104,7 +112,14 @@
         .asset-price {
             font-size: 16px;
             font-weight: bold;
-            margin-bottom: 4px;
+            margin-bottom: 8px;
+        }
+        
+        /* Nouveau style pour étiquette Gain/Perte */
+        .pl-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 2px;
         }
 
         .asset-pl {
@@ -118,7 +133,7 @@
             font-weight: normal;
         }
 
-        /* --- BADGES ANIMÉS POUR LE POURCENTAGE --- */
+        /* --- BADGES ANIMÉS --- */
         @keyframes pulse-up {
             0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
             70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
@@ -196,11 +211,11 @@
             padding-bottom: 60px; 
         }
 
-        /* --- WIDGET DE MODIFICATION SPACEX (Déplacé en bas à droite) --- */
+        /* --- WIDGET SPACEX --- */
         .spcx-widget {
             position: fixed;
             bottom: 20px;
-            right: 20px; /* Modification ici : right au lieu de left */
+            right: 20px;
             background-color: var(--card-bg);
             padding: 10px 15px;
             border-radius: 12px;
@@ -248,14 +263,8 @@
             background-color: #2563eb;
         }
 
-        /* Responsive pour que le widget s'adapte bien sur mobile */
         @media (max-width: 400px) {
-            .spcx-widget {
-                bottom: 10px;
-                right: 10px;
-                padding: 8px 10px;
-                gap: 5px;
-            }
+            .spcx-widget { bottom: 10px; right: 10px; padding: 8px 10px; gap: 5px; }
             .spcx-widget label { display: none; }
         }
     </style>
@@ -271,8 +280,7 @@
         </div>
 
         <div id="assets-container">
-            <!-- Injecté via JS -->
-        </div>
+            </div>
 
         <div class="footer-info">
             <div id="exchange-rate-display">Taux EUR/USD : --</div>
@@ -280,7 +288,6 @@
         </div>
     </div>
 
-    <!-- Le widget flottant en bas à droite -->
     <div class="spcx-widget">
         <label>Ajuster SPCX</label>
         <input type="number" id="spcx-manual-input" step="0.01" placeholder="Ex: 166.84">
@@ -290,6 +297,7 @@
     <script>
         const API_KEY = 'd8nou8hr01qvvn99oe20d8nou8hr01qvvn99oe2g'; 
 
+        // Ton portefeuille propre (seulement les 3 actions actives)
         const portfolio = [
             { ticker: 'TTWO', name: 'Take-Two', shares: 1.72064278, pru: 211.68 },
             { ticker: 'SPCX', name: 'SpaceX', shares: 1.00000000, pru: 135.00 },
@@ -336,8 +344,7 @@
         }
 
         async function fetchPrice(ticker) {
-            // --- COUPE-CIRCUIT POUR SPACEX ---
-            // On ne demande rien à Finnhub pour éviter de récupérer le prix du faux ETF SPCX
+            // Coupe-circuit manuel pour SpaceX
             if (ticker === 'SPCX') {
                 return manualSpcxPrice !== null ? manualSpcxPrice : 166.84;
             }
@@ -400,6 +407,7 @@
                     `;
                 }
 
+                // Construction de la carte avec Prix d'achat et étiquette Gain/Perte explicite
                 const card = document.createElement('div');
                 card.className = 'asset-card';
                 card.innerHTML = `
@@ -407,9 +415,11 @@
                         <div class="asset-info">
                             <span class="asset-ticker">${asset.ticker}</span>
                             <span class="asset-shares">${asset.shares.toFixed(4)} parts</span>
+                            <span class="asset-pru">Acheté à : ${asset.pru.toFixed(2)} $</span>
                         </div>
                         <div class="asset-numbers">
                             <span class="asset-price">${priceToUseEur.toFixed(2)} € <span class="usd-text">(${priceToUseUsd.toFixed(2)} $)</span></span>
+                            <div class="pl-label">Gain / Perte :</div>
                             <span class="asset-pl ${colorClass}">${sign}${plValueEur.toFixed(2)} € <span class="usd-text">(${sign}${plValueUsd.toFixed(2)} $)</span></span>
                         </div>
                         ${animatedBadge}
