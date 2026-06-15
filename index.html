@@ -2,312 +2,225 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Terminal de Trading</title>
     <style>
         :root {
-            /* Palette Apple Dark Mode */
             --bg-color: #000000;
-            --glass-bg: rgba(28, 28, 30, 0.55);
-            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-bg: rgba(28, 28, 30, 0.45);
+            --glass-border: rgba(255, 255, 255, 0.06);
             --text-main: #ffffff;
             --text-muted: #8e8e93;
-            --text-subtle: #636366;
+            --text-subtle: #48484a;
             --apple-green: #32d74b;
-            --apple-green-bg: rgba(50, 215, 75, 0.15);
+            --apple-green-bg: rgba(50, 215, 75, 0.1);
             --apple-red: #ff453a;
-            --apple-red-bg: rgba(255, 69, 58, 0.15);
+            --apple-red-bg: rgba(255, 69, 58, 0.1);
             --apple-blue: #0a84ff;
-            --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+        }
+
+        /* Verrouillage strict de la page pour empêcher le scroll */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: var(--bg-color);
         }
 
         body {
-            background-color: var(--bg-color);
-            /* Arrière-plan subtil pour donner vie au glassmorphism */
             background-image: 
-                radial-gradient(circle at 15% 20%, rgba(10, 132, 255, 0.12), transparent 25%),
-                radial-gradient(circle at 85% 60%, rgba(50, 215, 75, 0.08), transparent 25%),
-                radial-gradient(circle at 50% 100%, rgba(255, 69, 58, 0.05), transparent 30%);
-            background-attachment: fixed;
+                radial-gradient(circle at 10% 15%, rgba(10, 132, 255, 0.1), transparent 30%),
+                radial-gradient(circle at 90% 45%, rgba(50, 215, 75, 0.06), transparent 30%);
             color: var(--text-main);
             font-family: var(--font);
             -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            margin: 0;
-            padding: 20px 15px;
             display: flex;
             justify-content: center;
+            align-items: center;
         }
 
+        /* Conteneur calé au pixel près sur le viewport */
         .container {
             width: 100%;
             max-width: 440px; 
+            height: 100dvh;
+            box-sizing: border-box;
+            padding: 20px 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; /* Aligne Header, Cards et Dock sans vide */
         }
 
-        /* --- HEADER --- */
+        /* --- HEADER COMPACT --- */
         .header {
             text-align: center;
-            margin-top: 20px;
-            margin-bottom: 40px;
+            margin-bottom: 15px;
         }
 
         .header h1 {
-            font-size: 13px;
+            font-size: 11px;
             text-transform: uppercase;
             letter-spacing: 1px;
             color: var(--text-muted);
-            margin: 0 0 8px 0;
+            margin: 0 0 4px 0;
             font-weight: 600;
         }
 
         .total-value-eur {
-            font-size: 52px;
+            font-size: 46px;
             font-weight: 700;
             letter-spacing: -1.5px;
             margin: 0;
-            line-height: 1.1;
+            line-height: 1;
         }
 
         .total-value-usd {
-            font-size: 20px;
+            font-size: 17px;
             color: var(--text-muted);
             font-weight: 500;
-            margin-top: 4px;
-            margin-bottom: 16px;
+            margin: 2px 0 10px 0;
         }
 
         .total-pl {
             display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 15px;
+            padding: 6px 12px;
+            border-radius: 14px;
+            font-size: 14px;
             font-weight: 600;
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255,255,255,0.02);
         }
 
         .up { color: var(--apple-green); }
         .down { color: var(--apple-red); }
 
-        /* --- GLASSMORPHISM CARDS --- */
+        /* --- ZONE DES CARTES --- */
+        .assets-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px; /* Espace optimisé */
+            flex-grow: 1;
+            justify-content: center; /* Centre les cartes verticalement si l'écran est grand */
+            margin: 10px 0;
+        }
+
+        /* --- CARTE ULTRA-COMPACTE (GLASSMORPHISM) --- */
         .asset-card {
             background: var(--glass-bg);
-            backdrop-filter: blur(24px) saturate(180%);
-            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            backdrop-filter: blur(30px) saturate(200%);
+            -webkit-backdrop-filter: blur(30px) saturate(200%);
             border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            padding: 20px;
-            margin-bottom: 16px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-            transition: transform 0.2s ease;
+            border-radius: 20px;
+            padding: 14px 16px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
 
-        .asset-card:active {
-            transform: scale(0.98);
-        }
-
-        /* En-tête de la carte (Ticker + Valeur totale) */
-        .card-header {
+        /* Ligne Principale (Ticker & Prix Totaux) */
+        .row-main {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 16px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .ticker-col { display: flex; flex-direction: column; }
-        .value-col { text-align: right; display: flex; flex-direction: column; align-items: flex-end; }
-
-        .asset-ticker {
-            font-size: 22px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-        }
-
-        .asset-shares {
-            font-size: 13px;
-            color: var(--text-muted);
-            font-weight: 500;
-            margin-top: 2px;
-        }
-
-        .asset-total-eur {
-            font-size: 22px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-        }
-
-        .asset-total-usd {
-            font-size: 13px;
-            color: var(--text-muted);
-            font-weight: 500;
-            margin-top: 2px;
-        }
-
-        /* Corps de la carte (PRU, Cours, P&L) */
-        .card-body {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            margin-bottom: 20px;
-        }
-
-        .info-block { display: flex; flex-direction: column; gap: 8px; }
-        
-        .data-row { display: flex; flex-direction: column; }
-        .data-label { font-size: 11px; color: var(--text-subtle); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 2px; }
-        .data-value { font-size: 15px; font-weight: 600; }
-        
-        .pl-block { text-align: right; display: flex; flex-direction: column; align-items: flex-end;}
-        .asset-pl-eur { font-size: 16px; font-weight: 600; margin-bottom: 2px; }
-        .asset-pl-usd { font-size: 12px; opacity: 0.8; }
-
-        /* --- BADGES ANIMÉS --- */
-        @keyframes pulse-up {
-            0% { box-shadow: 0 0 0 0 rgba(50, 215, 75, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(50, 215, 75, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(50, 215, 75, 0); }
-        }
-
-        @keyframes pulse-down {
-            0% { box-shadow: 0 0 0 0 rgba(255, 69, 58, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(255, 69, 58, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(255, 69, 58, 0); }
-        }
-
-        .trend-badge {
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-weight: 700;
-            font-size: 13px;
-            display: inline-flex;
             align-items: center;
-            justify-content: center;
-            margin-top: 8px;
         }
 
-        .trend-up { background-color: var(--apple-green-bg); color: var(--apple-green); animation: pulse-up 2s infinite; }
-        .trend-down { background-color: var(--apple-red-bg); color: var(--apple-red); animation: pulse-down 2s infinite; }
+        .ticker-info { display: flex; align-items: baseline; gap: 6px; }
+        .asset-ticker { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+        .asset-shares { font-size: 12px; color: var(--text-muted); font-weight: 500; }
 
-        /* --- BOÎTE STRATÉGIE (Style iOS Widget) --- */
-        .strategy-box {
-            background-color: rgba(0, 0, 0, 0.2);
-            border-radius: 16px;
-            padding: 12px 16px;
+        .price-info { text-align: right; }
+        .asset-total-eur { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+        .asset-total-usd { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+
+        /* Ligne Secondaire (PRU, Cours actuel & Gain/Perte) */
+        .row-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             font-size: 13px;
+        }
+
+        .market-data { color: var(--text-muted); font-weight: 500; line-height: 1.4; }
+        .market-data span { color: var(--text-main); font-weight: 600; }
+
+        .pl-data { text-align: right; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+        .pl-usd { font-size: 11px; opacity: 0.7; font-weight: 500; }
+
+        /* Badge pourcentages discrets */
+        .trend-badge {
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .trend-up { background: var(--apple-green-bg); color: var(--apple-green); }
+        .trend-down { background: var(--apple-red-bg); color: var(--apple-red); }
+
+        /* Ligne Stratégie intégrée au bas de la carte */
+        .row-strategy {
+            font-size: 11px;
             color: var(--text-muted);
-            border: 1px solid rgba(255,255,255,0.03);
+            background: rgba(0,0,0,0.15);
+            padding: 6px 10px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.02);
         }
-
-        .strategy-title {
-            font-weight: 600;
-            color: var(--apple-blue);
-            margin-bottom: 4px;
-            display: block;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .progress-container {
+        .strat-title { color: var(--apple-blue); font-weight: 600; margin-right: 4px; }
+        
+        /* Barre de progression miniature */
+        .mini-progress-bar {
             width: 100%;
-            height: 4px;
-            background-color: rgba(255,255,255,0.1);
-            border-radius: 2px;
-            margin-top: 10px;
+            height: 3px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 1.5px;
+            margin-top: 4px;
             overflow: hidden;
         }
+        .mini-progress-fill { height: 100%; background: var(--apple-blue); transition: width 0.5s; }
 
-        .progress-bar {
-            height: 100%;
-            background-color: var(--apple-blue);
-            border-radius: 2px;
-            transition: width 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
-        }
-
-        .progress-text {
-            font-size: 11px;
-            margin-top: 6px;
-            color: var(--text-subtle);
+        /* --- LE DOCK IOS (TOUT EN UN BAS DE PAGE) --- */
+        .bottom-dock {
+            background: rgba(28, 28, 30, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 10px 14px;
             display: flex;
             justify-content: space-between;
-        }
-
-        /* --- FOOTER --- */
-        .footer-info {
-            text-align: center;
-            font-size: 12px;
-            color: var(--text-subtle);
-            margin-top: 30px;
-            padding-bottom: 80px; 
-            font-weight: 500;
-        }
-
-        /* --- WIDGET SPACEX FLOATING --- */
-        .spcx-widget {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            padding: 12px 16px;
-            border-radius: 20px;
-            display: flex;
             align-items: center;
-            gap: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-            border: 1px solid var(--glass-border);
-            z-index: 1000;
+            gap: 10px;
         }
 
-        .spcx-widget label {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-main);
-        }
+        .dock-meta { font-size: 10px; color: var(--text-subtle); font-weight: 600; line-height: 1.3; text-transform: uppercase; }
+        .dock-meta span { color: var(--text-muted); }
 
-        .spcx-widget input {
-            background-color: rgba(0,0,0,0.3);
+        .dock-input-group { display: flex; align-items: center; gap: 6px; }
+        .dock-input-group label { font-size: 11px; font-weight: 700; color: var(--text-muted); }
+        .dock-input-group input {
+            background: rgba(0, 0, 0, 0.4);
             color: white;
-            border: 1px solid rgba(255,255,255,0.1);
-            padding: 8px 12px;
-            border-radius: 10px;
-            width: 70px;
-            font-size: 14px;
-            font-weight: 500;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 6px 8px;
+            border-radius: 8px;
+            width: 55px;
+            font-size: 12px;
+            font-weight: 600;
             outline: none;
-            font-family: var(--font);
-            transition: border-color 0.2s;
+            text-align: center;
         }
-
-        .spcx-widget input:focus {
-            border-color: var(--apple-blue);
-        }
-
-        .spcx-widget button {
-            background-color: var(--apple-blue);
-            color: white;
+        .dock-input-group button {
+            background: var(--text-main);
+            color: var(--bg-color);
             border: none;
-            padding: 8px 16px;
-            border-radius: 10px;
+            padding: 6px 10px;
+            border-radius: 8px;
             cursor: pointer;
-            font-weight: 600;
-            font-size: 13px;
-            transition: opacity 0.2s;
-        }
-
-        .spcx-widget button:hover {
-            opacity: 0.8;
-        }
-
-        @media (max-width: 400px) {
-            .spcx-widget { bottom: 16px; right: 16px; padding: 10px 12px; gap: 8px; }
-            .spcx-widget label { display: none; }
+            font-weight: 700;
+            font-size: 11px;
         }
     </style>
 </head>
@@ -321,19 +234,20 @@
             <div id="total-pl" class="total-pl">--</div>
         </div>
 
-        <div id="assets-container">
+        <div id="assets-container" class="assets-list">
             </div>
 
-        <div class="footer-info">
-            <div id="exchange-rate-display">EUR/USD : --</div>
-            <div id="last-update" style="margin-top: 4px;">Dernière mise à jour : --</div>
+        <div class="bottom-dock">
+            <div class="dock-meta">
+                <div id="exchange-rate-display">EUR/USD : --</div>
+                <div id="last-update">Sync : --</div>
+            </div>
+            <div class="dock-input-group">
+                <label>SPCX $</label>
+                <input type="number" id="spcx-manual-input" step="0.01" placeholder="166.84">
+                <button onclick="applyManualSpcx()">OK</button>
+            </div>
         </div>
-    </div>
-
-    <div class="spcx-widget">
-        <label>SPCX</label>
-        <input type="number" id="spcx-manual-input" step="0.01" placeholder="166.84">
-        <button onclick="applyManualSpcx()">OK</button>
     </div>
 
     <script>
@@ -346,21 +260,9 @@
         ];
 
         const strategies = {
-            'TTWO': { 
-                title: 'ORDRE LIMIT EN ATTENTE', 
-                desc: 'Vente de 1 part auto. programmée.',
-                targetPrice: 250 
-            },
-            'SPCX': { 
-                title: 'COFFRE-FORT (HOLD)', 
-                desc: 'Objectif Jackpot long terme.',
-                targetPrice: null 
-            },
-            'NVDA': { 
-                title: 'EN SOMMEIL (HOLD)', 
-                desc: 'Attente du cash TTWO pour renforcer.',
-                targetPrice: null 
-            }
+            'TTWO': { title: '🎯 TARGET', desc: 'Ordre Limit de vente calé à 250 $.', targetPrice: 250 },
+            'SPCX': { title: '💎 HOLD', desc: 'Fonds de tiroir. Objectif Jackpot.', targetPrice: null },
+            'NVDA': { title: '⏳ HOLD', desc: 'En sommeil. Renfort prévu via cash TTWO.', targetPrice: null }
         };
 
         let manualSpcxPrice = null;
@@ -379,7 +281,7 @@
                 const data = await response.json();
                 return parseFloat(data.data.rates.EUR);
             } catch (error) {
-                console.error("Erreur taux de change:", error);
+                console.error("Erreur change:", error);
                 return 0.93; 
             }
         }
@@ -388,22 +290,20 @@
             if (ticker === 'SPCX') {
                 return manualSpcxPrice !== null ? manualSpcxPrice : 166.84;
             }
-
             try {
                 const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${API_KEY}`);
                 const data = await response.json();
-                
                 if (data.c === 0 || !data.c) return null; 
                 return data.c;
             } catch (error) {
-                console.error(`Erreur pour ${ticker}:`, error);
+                console.error(`Erreur ${ticker}:`, error);
                 return null;
             }
         }
 
         async function updateDashboard() {
             const eurRate = await fetchExchangeRate();
-            document.getElementById('exchange-rate-display').innerText = `1 USD = ${eurRate.toFixed(4)} EUR`;
+            document.getElementById('exchange-rate-display').innerHTML = `EUR/USD : <span>${eurRate.toFixed(4)}</span>`;
 
             const container = document.getElementById('assets-container');
             container.innerHTML = ''; 
@@ -428,11 +328,8 @@
 
                 const isUp = plValueUsd >= 0;
                 const colorClass = isUp ? 'up' : 'down';
-                const sign = isUp ? '+' : '';
-                
                 const trendClass = isUp ? 'trend-up' : 'trend-down';
-                const trendIcon = isUp ? '▲' : '▼';
-                const animatedBadge = `<div class="trend-badge ${trendClass}">${trendIcon} ${Math.abs(plPercent).toFixed(2)}%</div>`;
+                const sign = isUp ? '+' : '';
 
                 const strat = strategies[asset.ticker];
                 let progressHtml = '';
@@ -440,12 +337,8 @@
                 if (strat.targetPrice) {
                     const progress = Math.min((priceToUseUsd / strat.targetPrice) * 100, 100);
                     progressHtml = `
-                        <div class="progress-container">
-                            <div class="progress-bar" style="width: ${progress}%;"></div>
-                        </div>
-                        <div class="progress-text">
-                            <span>Progression</span>
-                            <span>Cible : ${strat.targetPrice} $</span>
+                        <div class="mini-progress-bar">
+                            <div class="mini-progress-fill" style="width: ${progress}%;"></div>
                         </div>
                     `;
                 }
@@ -453,39 +346,30 @@
                 const card = document.createElement('div');
                 card.className = 'asset-card';
                 card.innerHTML = `
-                    <div class="card-header">
-                        <div class="ticker-col">
+                    <div class="row-main">
+                        <div class="ticker-info">
                             <span class="asset-ticker">${asset.ticker}</span>
-                            <span class="asset-shares">${asset.shares.toFixed(4)} parts</span>
+                            <span class="asset-shares">${asset.shares.toFixed(3)} parts</span>
                         </div>
-                        <div class="value-col">
-                            <span class="asset-total-eur">${currentValueEur.toFixed(2)} €</span>
-                            <span class="asset-total-usd">${currentValueUsd.toFixed(2)} $</span>
-                        </div>
-                    </div>
-
-                    <div class="card-body">
-                        <div class="info-block">
-                            <div class="data-row">
-                                <span class="data-label">Acheté à</span>
-                                <span class="data-value">${asset.pru.toFixed(2)} $</span>
-                            </div>
-                            <div class="data-row">
-                                <span class="data-label">Cours actuel</span>
-                                <span class="data-value">${priceToUseUsd.toFixed(2)} $</span>
-                            </div>
-                        </div>
-                        <div class="pl-block">
-                            <span class="data-label">Gain / Perte</span>
-                            <span class="asset-pl-eur ${colorClass}">${sign}${plValueEur.toFixed(2)} €</span>
-                            <span class="asset-pl-usd ${colorClass}">${sign}${plValueUsd.toFixed(2)} $</span>
-                            ${animatedBadge}
+                        <div class="price-info">
+                            <div class="asset-total-eur">${currentValueEur.toFixed(2)} €</div>
+                            <div class="asset-total-usd">${currentValueUsd.toFixed(2)} $</div>
                         </div>
                     </div>
 
-                    <div class="strategy-box">
-                        <span class="strategy-title">${strat.title}</span>
-                        ${strat.desc}
+                    <div class="row-details">
+                        <div class="market-data">
+                            PRU: <span>${asset.pru.toFixed(2)}$</span> • Cours: <span>${priceToUseUsd.toFixed(2)}$</span>
+                        </div>
+                        <div class="pl-data ${colorClass}">
+                            <span class="pl-usd">${sign}${plValueUsd.toFixed(1)}$</span>
+                            <span>${sign}${plValueEur.toFixed(2)}€</span>
+                            <span class="trend-badge ${trendClass}">${sign}${Math.abs(plPercent).toFixed(1)}%</span>
+                        </div>
+                    </div>
+
+                    <div class="row-strategy">
+                        <span class="strat-title">${strat.title}</span> ${strat.desc}
                         ${progressHtml}
                     </div>
                 `;
@@ -498,19 +382,18 @@
             const totalPlPercent = (totalPlValueUsd / totalInvestedUsd) * 100;
             const isTotalUp = totalPlValueUsd >= 0;
 
-            // Header Updates
             document.getElementById('total-value-eur').innerText = `${totalCurrentValueEur.toFixed(2)} €`;
-            document.getElementById('total-value-usd').innerText = `${totalCurrentValueUsd.toFixed(2)} $`;
+            document.getElementById('total-value-usd').innerText = `~ ${totalCurrentValueUsd.toFixed(2)} $`;
             
             const totalPlElement = document.getElementById('total-pl');
             totalPlElement.innerHTML = `
                 ${isTotalUp ? '+' : ''}${totalPlValueEur.toFixed(2)} € 
-                &nbsp;•&nbsp; ${isTotalUp ? '+' : ''}${totalPlPercent.toFixed(2)} %
+                &nbsp;•&nbsp; ${isTotalUp ? '+' : ''}${totalPlPercent.toFixed(1)} %
             `;
             totalPlElement.className = `total-pl ${isTotalUp ? 'up' : 'down'}`;
 
             const now = new Date();
-            document.getElementById('last-update').innerText = `Mis à jour à ${now.toLocaleTimeString('fr-FR').slice(0, 5)}`;
+            document.getElementById('last-update').innerHTML = `Sync : <span>${now.toLocaleTimeString('fr-FR').slice(0, 5)}</span>`;
         }
 
         updateDashboard();
