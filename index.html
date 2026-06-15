@@ -43,13 +43,15 @@
             font-weight: normal;
         }
 
-        .total-value-usd {
+        /* L'Euro passe en grand */
+        .total-value-eur {
             font-size: 42px;
             font-weight: bold;
             margin: 0;
         }
 
-        .total-value-eur {
+        /* Le Dollar passe en plus petit */
+        .total-value-usd {
             font-size: 24px;
             color: var(--text-muted);
             margin-top: 5px;
@@ -110,7 +112,8 @@
             font-weight: 500;
         }
 
-        .eur-text {
+        /* Classe pour le texte USD en secondaire */
+        .usd-text {
             color: var(--text-muted);
             font-size: 0.85em;
             font-weight: normal;
@@ -163,8 +166,8 @@
     <div class="container">
         <div class="header">
             <h1>Solde du Portefeuille</h1>
-            <div id="total-value-usd" class="total-value-usd">Chargement...</div>
-            <div id="total-value-eur" class="total-value-eur">-- €</div>
+            <div id="total-value-eur" class="total-value-eur">Chargement...</div>
+            <div id="total-value-usd" class="total-value-usd">-- $</div>
             <div id="total-pl" class="total-pl">--</div>
         </div>
 
@@ -182,6 +185,7 @@
         // Ta clé API Finnhub personnelle
         const API_KEY = 'd8nou8hr01qvvn99oe20d8nou8hr01qvvn99oe2g'; 
 
+        // Ton portefeuille (PRU toujours stocké en USD car les actions américaines s'achètent en USD)
         const portfolio = [
             { ticker: 'TTWO', name: 'Take-Two', shares: 1.72064278, pru: 211.68 },
             { ticker: 'SPCX', name: 'SpaceX', shares: 1.00000000, pru: 135.00 },
@@ -206,15 +210,15 @@
             }
         };
 
-        // Fonction pour récupérer le taux de change USD vers EUR
+        // Utilisation de l'API publique Coinbase pour un taux de change quasi-temps réel
         async function fetchExchangeRate() {
             try {
-                const response = await fetch('https://open.er-api.com/v6/latest/USD');
+                const response = await fetch('https://api.coinbase.com/v2/exchange-rates?currency=USD');
                 const data = await response.json();
-                return data.rates.EUR;
+                return parseFloat(data.data.rates.EUR);
             } catch (error) {
                 console.error("Erreur taux de change:", error);
-                return 0.93; // Taux de secours approximatif en cas d'échec de l'API
+                return 0.93; // Taux de secours approximatif
             }
         }
 
@@ -267,6 +271,7 @@
                 const strat = strategies[asset.ticker];
                 let progressHtml = '';
 
+                // La barre de progression reste calée sur l'objectif USD (250$)
                 if (strat.targetPrice) {
                     const progress = Math.min((priceToUseUsd / strat.targetPrice) * 100, 100);
                     progressHtml = `
@@ -277,6 +282,7 @@
                     `;
                 }
 
+                // Inversion de l'affichage : EUR en premier, USD entre parenthèses
                 const card = document.createElement('div');
                 card.className = 'asset-card';
                 card.innerHTML = `
@@ -286,8 +292,8 @@
                             <span class="asset-shares">${asset.shares.toFixed(4)} parts</span>
                         </div>
                         <div class="asset-numbers">
-                            <span class="asset-price">${priceToUseUsd.toFixed(2)} $ <span class="eur-text">(${priceToUseEur.toFixed(2)} €)</span></span>
-                            <span class="asset-pl ${colorClass}">${sign}${plValueUsd.toFixed(2)} $ <span class="eur-text">(${sign}${plValueEur.toFixed(2)} €)</span></span>
+                            <span class="asset-price">${priceToUseEur.toFixed(2)} € <span class="usd-text">(${priceToUseUsd.toFixed(2)} $)</span></span>
+                            <span class="asset-pl ${colorClass}">${sign}${plValueEur.toFixed(2)} € <span class="usd-text">(${sign}${plValueUsd.toFixed(2)} $)</span></span>
                         </div>
                     </div>
                     <div class="strategy-box">
@@ -306,14 +312,14 @@
             const totalPlPercent = (totalPlValueUsd / totalInvestedUsd) * 100;
             const isTotalUp = totalPlValueUsd >= 0;
 
-            // Affichage des Totaux
-            document.getElementById('total-value-usd').innerText = `${totalCurrentValueUsd.toFixed(2)} $`;
-            document.getElementById('total-value-eur').innerText = `~ ${totalCurrentValueEur.toFixed(2)} €`;
+            // Affichage des Totaux inversé
+            document.getElementById('total-value-eur').innerText = `${totalCurrentValueEur.toFixed(2)} €`;
+            document.getElementById('total-value-usd').innerText = `~ ${totalCurrentValueUsd.toFixed(2)} $`;
             
             const totalPlElement = document.getElementById('total-pl');
             totalPlElement.innerHTML = `
-                ${isTotalUp ? '+' : ''}${totalPlValueUsd.toFixed(2)} $ 
-                <span class="eur-text">(${isTotalUp ? '+' : ''}${totalPlValueEur.toFixed(2)} €)</span> 
+                ${isTotalUp ? '+' : ''}${totalPlValueEur.toFixed(2)} € 
+                <span class="usd-text">(${isTotalUp ? '+' : ''}${totalPlValueUsd.toFixed(2)} $)</span> 
                 | ${isTotalUp ? '+' : ''}${totalPlPercent.toFixed(2)} %
             `;
             totalPlElement.className = `total-pl ${isTotalUp ? 'up' : 'down'}`;
