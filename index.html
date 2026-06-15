@@ -28,7 +28,7 @@
 
         .container {
             width: 100%;
-            max-width: 480px; /* Légèrement élargi pour le badge animé */
+            max-width: 480px; 
         }
 
         .header {
@@ -118,7 +118,7 @@
             font-weight: normal;
         }
 
-        /* --- NOUVEAU : BADGES ANIMÉS POUR LE POURCENTAGE --- */
+        /* --- BADGES ANIMÉS POUR LE POURCENTAGE --- */
         @keyframes pulse-up {
             0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
             70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
@@ -153,7 +153,6 @@
             color: var(--red);
             animation: pulse-down 2s infinite;
         }
-        /* -------------------------------------------------- */
 
         .strategy-box {
             background-color: rgba(11, 20, 38, 0.5);
@@ -194,14 +193,14 @@
             color: var(--text-muted);
             margin-top: 20px;
             line-height: 1.6;
-            padding-bottom: 60px; /* Espace pour le widget flottant */
+            padding-bottom: 60px; 
         }
 
-        /* --- NOUVEAU : WIDGET DE MODIFICATION SPACEX --- */
+        /* --- WIDGET DE MODIFICATION SPACEX (Déplacé en bas à droite) --- */
         .spcx-widget {
             position: fixed;
             bottom: 20px;
-            left: 20px;
+            right: 20px; /* Modification ici : right au lieu de left */
             background-color: var(--card-bg);
             padding: 10px 15px;
             border-radius: 12px;
@@ -248,8 +247,17 @@
         .spcx-widget button:hover {
             background-color: #2563eb;
         }
-        /* -------------------------------------------------- */
 
+        /* Responsive pour que le widget s'adapte bien sur mobile */
+        @media (max-width: 400px) {
+            .spcx-widget {
+                bottom: 10px;
+                right: 10px;
+                padding: 8px 10px;
+                gap: 5px;
+            }
+            .spcx-widget label { display: none; }
+        }
     </style>
 </head>
 <body>
@@ -272,7 +280,7 @@
         </div>
     </div>
 
-    <!-- Le widget pour forcer la valeur de SpaceX -->
+    <!-- Le widget flottant en bas à droite -->
     <div class="spcx-widget">
         <label>Ajuster SPCX</label>
         <input type="number" id="spcx-manual-input" step="0.01" placeholder="Ex: 166.84">
@@ -306,15 +314,13 @@
             }
         };
 
-        // Variable globale qui gardera en mémoire le prix manuel de SpaceX
         let manualSpcxPrice = null;
 
-        // Fonction liée au bouton "Appliquer"
         function applyManualSpcx() {
             const inputVal = document.getElementById('spcx-manual-input').value;
             if (inputVal && !isNaN(inputVal)) {
                 manualSpcxPrice = parseFloat(inputVal);
-                updateDashboard(); // On force la mise à jour immédiate de l'écran
+                updateDashboard(); 
             }
         }
 
@@ -330,17 +336,17 @@
         }
 
         async function fetchPrice(ticker) {
+            // --- COUPE-CIRCUIT POUR SPACEX ---
+            // On ne demande rien à Finnhub pour éviter de récupérer le prix du faux ETF SPCX
+            if (ticker === 'SPCX') {
+                return manualSpcxPrice !== null ? manualSpcxPrice : 166.84;
+            }
+
             try {
                 const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${API_KEY}`);
                 const data = await response.json();
                 
-                if (data.c === 0 || !data.c) {
-                    // Si on est sur SpaceX, on regarde d'abord s'il y a une valeur manuelle, sinon 166.84
-                    if (ticker === 'SPCX') {
-                        return manualSpcxPrice !== null ? manualSpcxPrice : 166.84;
-                    }
-                    return null; 
-                }
+                if (data.c === 0 || !data.c) return null; 
                 return data.c;
             } catch (error) {
                 console.error(`Erreur pour ${ticker}:`, error);
@@ -377,7 +383,6 @@
                 const colorClass = isUp ? 'up' : 'down';
                 const sign = isUp ? '+' : '';
                 
-                // --- Configuration de la pilule animée ---
                 const trendClass = isUp ? 'trend-up' : 'trend-down';
                 const trendIcon = isUp ? '▲' : '▼';
                 const animatedBadge = `<div class="trend-badge ${trendClass}">${trendIcon} ${Math.abs(plPercent).toFixed(2)}%</div>`;
@@ -407,7 +412,6 @@
                             <span class="asset-price">${priceToUseEur.toFixed(2)} € <span class="usd-text">(${priceToUseUsd.toFixed(2)} $)</span></span>
                             <span class="asset-pl ${colorClass}">${sign}${plValueEur.toFixed(2)} € <span class="usd-text">(${sign}${plValueUsd.toFixed(2)} $)</span></span>
                         </div>
-                        <!-- Injection de l'animation ici à droite -->
                         ${animatedBadge}
                     </div>
                     <div class="strategy-box">
