@@ -3,389 +3,366 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portfolio</title>
+<title>Portfolio Tracker</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  :root {
-    --bg:       #0a0a0f;
-    --surface:  #111118;
-    --border:   #1e1e2e;
-    --muted:    #3a3a50;
-    --text:     #e8e8f0;
-    --sub:      #6b6b8a;
-    --green:    #3ddc84;
-    --red:      #ff5f6d;
-    --accent:   #5c6bc0;
-    --gold:     #c9a84c;
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --bg:#09090e;--surf:#111119;--border:#1a1a2a;--muted:#2e2e45;
+    --text:#e2e2ee;--sub:#5a5a7a;--green:#3ddc84;--red:#ff5f6d;
+    --accent:#6c7ae0;--gold:#c9a84c;
+  }
+  body{
+    background:var(--bg);color:var(--text);
+    font-family:'SF Mono','Fira Code',Consolas,monospace;
+    min-height:100vh;padding:20px 14px 48px;
+    max-width:980px;margin:0 auto;
   }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
-    min-height: 100vh;
-    padding: 24px 16px 40px;
+  /* HEADER */
+  .hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px;gap:12px;flex-wrap:wrap}
+  .brand{font-size:10px;color:var(--sub);letter-spacing:.18em;text-transform:uppercase}
+  .total-lbl{font-size:10px;color:var(--sub);letter-spacing:.1em;margin-top:14px;margin-bottom:3px}
+  .total-val{font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1}
+  .total-pnl{font-size:13px;margin-top:5px}
+  .hdr-right{text-align:right}
+  .rlbl{font-size:10px;color:var(--sub);letter-spacing:.08em}
+  .countdown{font-size:24px;font-weight:700;color:var(--accent);line-height:1.1}
+  .last-upd{font-size:10px;color:var(--muted);margin-top:3px}
+
+  hr.div{border:none;border-top:1px solid var(--border);margin:0 0 18px}
+
+  /* BANNER GTA */
+  .banner{
+    display:flex;align-items:center;gap:14px;
+    background:linear-gradient(90deg,rgba(108,122,224,.1),rgba(201,168,76,.06));
+    border:1px solid rgba(201,168,76,.18);border-radius:10px;
+    padding:11px 16px;margin-bottom:18px;
+  }
+  .banner-ico{font-size:22px}
+  .banner-lbl{font-size:9px;color:var(--sub);letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px}
+  .banner-val{font-size:14px;font-weight:700;color:var(--gold)}
+
+  /* CARDS */
+  .cards{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:20px}
+  @media(min-width:560px){.cards{grid-template-columns:1fr 1fr}}
+  @media(min-width:840px){.cards{grid-template-columns:1fr 1fr 1fr}}
+
+  .card{
+    background:var(--surf);border:1px solid var(--border);
+    border-radius:12px;padding:18px;transition:border-color .2s;
+  }
+  .card:hover{border-color:var(--muted)}
+  .c-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+  .c-ticker{font-size:13px;font-weight:700;letter-spacing:.08em;color:var(--accent)}
+  .c-name{font-size:10px;color:var(--sub);margin-top:2px}
+
+  .badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.06em;white-space:nowrap}
+  .up{color:var(--green)}.dn{color:var(--red)}.fl{color:var(--sub)}
+  .badge.up{background:rgba(61,220,132,.1)}.badge.dn{background:rgba(255,95,109,.1)}.badge.fl{background:rgba(90,90,122,.1)}
+
+  .c-price-row{display:flex;align-items:baseline;gap:6px;margin-bottom:3px}
+  .c-price{font-size:24px;font-weight:700;letter-spacing:-.02em}
+  .c-cur{font-size:11px;color:var(--sub)}
+  .c-chg{font-size:11px;margin-bottom:12px}
+
+  .hi-lo{font-size:10px;color:var(--sub);margin-bottom:10px}
+  .hi-lo span{color:var(--muted)}
+
+  .c-sep{border:none;border-top:1px solid var(--border);margin:10px 0}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .st-lbl{font-size:9px;color:var(--sub);letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px}
+  .st-val{font-size:13px;font-weight:600}
+  .st-val.nt{color:var(--text)}
+
+  .wbar-track{height:2px;background:var(--muted);border-radius:2px;margin-top:14px}
+  .wbar-fill{height:2px;border-radius:2px;background:var(--accent);transition:width .5s}
+  .wbar-lbl{font-size:9px;color:var(--sub);text-align:right;margin-top:3px}
+
+  /* SUMMARY */
+  .summary{
+    background:var(--surf);border:1px solid var(--border);
+    border-radius:12px;padding:14px 18px;
+    display:flex;flex-wrap:wrap;gap:16px;margin-bottom:16px;
+  }
+  .sum-item{flex:1;min-width:100px}
+  .s-lbl{font-size:9px;color:var(--sub);letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px}
+  .s-val{font-size:15px;font-weight:700}
+
+  /* ERR */
+  .err-box{
+    background:rgba(255,95,109,.07);border:1px solid rgba(255,95,109,.18);
+    border-radius:10px;padding:13px 16px;font-size:11px;color:var(--red);
+    display:none;margin-bottom:16px;line-height:1.6;
   }
 
-  /* ── HEADER ── */
-  header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    margin-bottom: 32px;
+  /* LOADER */
+  .loader{
+    position:fixed;inset:0;background:var(--bg);z-index:99;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    transition:opacity .35s;
   }
-  .brand { font-size: 11px; color: var(--sub); letter-spacing: 0.18em; text-transform: uppercase; }
-  .total-label { font-size: 11px; color: var(--sub); letter-spacing: 0.12em; margin-bottom: 4px; }
-  .total-value { font-size: 36px; font-weight: 700; letter-spacing: -0.02em; }
-  .total-perf { font-size: 13px; margin-top: 4px; }
-  .refresh-info { text-align: right; }
-  .refresh-info span { font-size: 10px; color: var(--sub); display: block; }
-  #countdown { font-size: 18px; color: var(--accent); font-weight: 700; }
-  #last-update { font-size: 10px; color: var(--muted); margin-top: 2px; }
-
-  /* ── DIVIDER ── */
-  hr { border: none; border-top: 1px solid var(--border); margin: 0 0 24px; }
-
-  /* ── CARDS GRID ── */
-  .cards { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 28px; }
-  @media(min-width:600px){ .cards { grid-template-columns: 1fr 1fr; } }
-  @media(min-width:900px){ .cards { grid-template-columns: 1fr 1fr 1fr; } }
-
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 20px;
-    position: relative;
-    transition: border-color .2s;
+  .spinner{
+    width:34px;height:34px;border:3px solid var(--border);
+    border-top-color:var(--accent);border-radius:50%;
+    animation:spin .75s linear infinite;margin-bottom:14px;
   }
-  .card:hover { border-color: var(--muted); }
-  .card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
-  .ticker { font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: var(--accent); }
-  .company { font-size: 10px; color: var(--sub); margin-top: 2px; letter-spacing: 0.05em; }
-  .badge {
-    font-size: 10px; font-weight: 700; padding: 3px 8px;
-    border-radius: 20px; letter-spacing: 0.08em;
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .loader-txt{font-size:11px;color:var(--sub);letter-spacing:.12em}
+
+  /* BTN */
+  .btn-row{display:flex;gap:8px;margin-top:8px;justify-content:flex-end}
+  .btn{
+    background:var(--surf);border:1px solid var(--border);color:var(--sub);
+    font-family:inherit;font-size:10px;padding:6px 12px;border-radius:8px;
+    cursor:pointer;transition:border-color .2s,color .2s;letter-spacing:.06em;
   }
-  .badge.up   { background: rgba(61,220,132,.12); color: var(--green); }
-  .badge.down { background: rgba(255,95,109,.12);  color: var(--red); }
-  .badge.flat { background: rgba(107,107,138,.12); color: var(--sub); }
+  .btn:hover{border-color:var(--accent);color:var(--accent)}
 
-  .price-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
-  .price { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; }
-  .price-currency { font-size: 12px; color: var(--sub); }
-  .price-change { font-size: 12px; }
-  .price-change.up   { color: var(--green); }
-  .price-change.down { color: var(--red); }
-
-  .divider-mini { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
-
-  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .stat-label { font-size: 9px; color: var(--sub); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 3px; }
-  .stat-value { font-size: 14px; font-weight: 600; }
-  .stat-value.up   { color: var(--green); }
-  .stat-value.down { color: var(--red); }
-  .stat-value.neutral { color: var(--text); }
-
-  /* bar de poids */
-  .weight-bar-track {
-    height: 3px; background: var(--border); border-radius: 2px; margin-top: 14px;
-  }
-  .weight-bar-fill {
-    height: 3px; border-radius: 2px; background: var(--accent); transition: width .4s;
-  }
-  .weight-label { font-size: 9px; color: var(--muted); text-align: right; margin-top: 4px; }
-
-  /* spinner */
-  .loading-overlay {
-    position: fixed; inset: 0; background: var(--bg);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    z-index: 99; transition: opacity .4s;
-  }
-  .spinner {
-    width: 36px; height: 36px;
-    border: 3px solid var(--border);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin .8s linear infinite;
-    margin-bottom: 16px;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .loading-text { font-size: 12px; color: var(--sub); letter-spacing: 0.12em; }
-
-  /* ── SUMMARY BAR ── */
-  .summary {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 16px 20px;
-    display: flex; flex-wrap: wrap; gap: 20px;
-  }
-  .summary-item { flex: 1; min-width: 120px; }
-  .summary-item .s-label { font-size: 9px; color: var(--sub); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 4px; }
-  .summary-item .s-val   { font-size: 16px; font-weight: 700; }
-
-  /* ── ERROR ── */
-  .error-msg { font-size: 11px; color: var(--red); margin-top: 6px; display: none; }
-
-  /* pulse quand refresh */
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
-  .refreshing .price { animation: pulse .6s ease-in-out 2; }
-
-  /* GTA countdown banner */
-  .banner {
-    background: linear-gradient(90deg, rgba(92,107,192,.15), rgba(201,168,76,.08));
-    border: 1px solid rgba(201,168,76,.2);
-    border-radius: 10px;
-    padding: 12px 18px;
-    display: flex; align-items: center; gap: 12px;
-    margin-bottom: 20px;
-    font-size: 12px;
-  }
-  .banner-icon { font-size: 20px; }
-  .banner-label { color: var(--sub); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
-  .banner-val { color: var(--gold); font-weight: 700; font-size: 15px; }
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  .refreshing .c-price{animation:pulse .6s ease-in-out 2}
 </style>
 </head>
 <body>
 
-<div class="loading-overlay" id="loader">
+<div class="loader" id="loader">
   <div class="spinner"></div>
-  <div class="loading-text">CHARGEMENT DES COURS…</div>
+  <div class="loader-txt">CHARGEMENT DES COURS…</div>
 </div>
 
-<header>
+<header class="hdr">
   <div>
     <div class="brand">Portfolio Tracker</div>
-    <div class="total-label" style="margin-top:14px;">VALEUR TOTALE</div>
-    <div class="total-value" id="total-eur">— €</div>
-    <div class="total-perf" id="total-perf">—</div>
+    <div class="total-lbl">VALEUR TOTALE</div>
+    <div class="total-val" id="total-val">— €</div>
+    <div class="total-pnl" id="total-pnl">—</div>
   </div>
-  <div class="refresh-info">
-    <span>Actualisation dans</span>
-    <div id="countdown">60</div>
-    <span id="last-update">—</span>
+  <div class="hdr-right">
+    <div class="rlbl">Prochain refresh</div>
+    <div class="countdown" id="countdown">60s</div>
+    <div class="last-upd" id="last-upd">—</div>
+    <div class="btn-row">
+      <button class="btn" onclick="manualRefresh()">↺ Rafraîchir</button>
+    </div>
   </div>
 </header>
 
-<hr>
+<hr class="div">
 
-<!-- GTA VI countdown -->
 <div class="banner">
-  <div class="banner-icon">🎮</div>
+  <div class="banner-ico">🎮</div>
   <div>
-    <div class="banner-label">GTA VI — 19 nov 2026</div>
-    <div class="banner-val" id="gta-countdown">calcul…</div>
+    <div class="banner-lbl">GTA VI — 19 novembre 2026</div>
+    <div class="banner-val" id="gta-val">…</div>
   </div>
 </div>
 
-<!-- Cards -->
-<div class="cards" id="cards-container"></div>
+<div class="err-box" id="err-box"></div>
 
-<!-- Summary -->
-<div class="summary" id="summary">
-  <div class="summary-item">
-    <div class="s-label">Investi (coût)</div>
-    <div class="s-val" id="sum-cost">—</div>
-  </div>
-  <div class="summary-item">
-    <div class="s-label">Valeur actuelle</div>
-    <div class="s-val" id="sum-value">—</div>
-  </div>
-  <div class="summary-item">
-    <div class="s-label">+/- latent €</div>
-    <div class="s-val" id="sum-pnl">—</div>
-  </div>
-  <div class="summary-item">
-    <div class="s-label">+/- latent %</div>
-    <div class="s-val" id="sum-pnl-pct">—</div>
-  </div>
+<div class="cards" id="cards"></div>
+
+<div class="summary">
+  <div class="sum-item"><div class="s-lbl">Prix de revient</div><div class="s-val nt" id="s-cost">—</div></div>
+  <div class="sum-item"><div class="s-lbl">Valeur actuelle</div><div class="s-val nt" id="s-val">—</div></div>
+  <div class="sum-item"><div class="s-lbl">+/- latent €</div><div class="s-val" id="s-pnl">—</div></div>
+  <div class="sum-item"><div class="s-lbl">+/- latent %</div><div class="s-val" id="s-pct">—</div></div>
+  <div class="sum-item"><div class="s-lbl">EUR / USD live</div><div class="s-val nt" id="s-fx">—</div></div>
 </div>
 
 <script>
-// ─── CONFIGURATION DU PORTEFEUILLE ─────────────────────────────────────────
-// Modifie ici si tu changes tes positions
+// ═══════════════════════════════════════════════════════════════
+//  CONFIGURATION — modifie ici si tu changes tes positions
+// ═══════════════════════════════════════════════════════════════
+const API_KEY   = 'd8nou8hr01qvvn99oe20d8nou8hr01qvvn99oe2g';
 const PORTFOLIO = [
-  { ticker: 'TTWO',  name: 'Take-Two Interactive', qty: 2.34,  costUSD: 207.00 },
-  { ticker: 'SONY',  name: 'Sony Group Corp.',      qty: 1.88,  costUSD:  20.10 },
-  { ticker: 'NVDA',  name: 'NVIDIA Corporation',    qty: 0.17,  costUSD: 210.00 },
+  { ticker:'TTWO', name:'Take-Two Interactive', qty:2.34,  costUSD:207.00 },
+  { ticker:'SONY', name:'Sony Group Corp.',      qty:1.88,  costUSD:20.04  },
+  { ticker:'NVDA', name:'NVIDIA Corporation',    qty:0.17,  costUSD:210.00 },
 ];
+// ═══════════════════════════════════════════════════════════════
 
-// Taux EUR/USD fixe de secours (sera remplacé par le live)
-let EUR_USD = 1.085;
+let EURUSD    = 1.09;
+let timerSec  = 60;
 
-// ─── PROXY Yahoo Finance (évite CORS) ──────────────────────────────────────
-// On utilise un proxy public gratuit no-cors-compatible
-async function fetchQuote(ticker) {
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1m&range=1d`;
-  const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-  const res = await fetch(proxy);
-  const json = await res.json();
-  const data = JSON.parse(json.contents);
-  const meta = data.chart.result[0].meta;
+// ── FETCH FINNHUB ────────────────────────────────────────────────────────────
+async function getQuote(ticker) {
+  const url = `https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${API_KEY}`;
+  const r   = await fetch(url, { signal: AbortSignal.timeout(8000) });
+  if (!r.ok) throw new Error(`Finnhub HTTP ${r.status} pour ${ticker}`);
+  const d = await r.json();
+  if (!d.c || d.c === 0) throw new Error(`Pas de données pour ${ticker}`);
   return {
-    price:         meta.regularMarketPrice,
-    prevClose:     meta.chartPreviousClose || meta.previousClose,
-    currency:      meta.currency,
-    marketState:   meta.marketState, // REGULAR / PRE / POST / CLOSED
+    price:     d.c,   // cours actuel
+    prevClose: d.pc,  // clôture précédente
+    high:      d.h,   // plus haut du jour
+    low:       d.l,   // plus bas du jour
+    open:      d.o,   // ouverture
   };
 }
 
-async function fetchEURUSD() {
+// ── FETCH EUR/USD (sans clé, gratuit) ───────────────────────────────────────
+async function getEURUSD() {
   try {
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/EURUSD=X?interval=1m&range=1d`;
-    const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-    const res = await fetch(proxy);
-    const json = await res.json();
-    const data = JSON.parse(json.contents);
-    EUR_USD = data.chart.result[0].meta.regularMarketPrice;
-  } catch(e) { /* utilise valeur par défaut */ }
+    const r = await fetch('https://open.er-api.com/v6/latest/USD',
+                          { signal: AbortSignal.timeout(5000) });
+    const d = await r.json();
+    if (d?.rates?.EUR) EURUSD = 1 / d.rates.EUR;
+  } catch(_) { /* garde valeur précédente */ }
 }
 
-// ─── RENDU ─────────────────────────────────────────────────────────────────
-function sign(n) { return n >= 0 ? '+' : ''; }
-function cls(n)  { return n > 0 ? 'up' : n < 0 ? 'down' : 'flat'; }
-function fmt(n, dec=2) { return n.toLocaleString('fr-FR', {minimumFractionDigits:dec, maximumFractionDigits:dec}); }
+// ── HELPERS ──────────────────────────────────────────────────────────────────
+const f   = (n,d=2) => (+n).toLocaleString('fr-FR',{minimumFractionDigits:d,maximumFractionDigits:d});
+const sg  = n => n >= 0 ? '+' : '';
+const cl  = n => n > 0 ? 'up' : n < 0 ? 'dn' : 'fl';
 
-function buildCard(item, quote, totalValueUSD) {
+function buildCard(item, q, totalUSD) {
   const { ticker, name, qty, costUSD } = item;
-  const { price, prevClose, marketState } = quote;
+  const dayChg  = q.price - q.prevClose;
+  const dayPct  = (dayChg / q.prevClose) * 100;
+  const valUSD  = q.price * qty;
+  const valEUR  = valUSD / EURUSD;
+  const costTot = costUSD * qty;
+  const pnlUSD  = (q.price - costUSD) * qty;
+  const pnlEUR  = pnlUSD / EURUSD;
+  const pnlPct  = ((q.price - costUSD) / costUSD) * 100;
+  const dayEUR  = dayChg * qty / EURUSD;
+  const weight  = (valUSD / totalUSD) * 100;
 
-  const changeDay   = price - prevClose;
-  const changePct   = (changeDay / prevClose) * 100;
-  const valueUSD    = price * qty;
-  const valueEUR    = valueUSD / EUR_USD;
-  const costEUR     = costUSD * qty / EUR_USD;
-  const pnlEUR      = valueEUR - costEUR;
-  const pnlPct      = ((price - costUSD) / costUSD) * 100;
-  const weight      = (valueUSD / totalValueUSD) * 100;
-
-  const stateLabel  = marketState === 'REGULAR' ? '● LIVE' : marketState === 'PRE' ? '◐ PRÉ' : '○ FERMÉ';
-
-  const badgeCls = cls(changePct);
-
-  return `
-  <div class="card" id="card-${ticker}">
-    <div class="card-top">
+  return `<div class="card">
+    <div class="c-top">
       <div>
-        <div class="ticker">${ticker} <span style="font-size:9px;color:var(--muted);font-weight:400;">${stateLabel}</span></div>
-        <div class="company">${name}</div>
+        <div class="c-ticker">${ticker}</div>
+        <div class="c-name">${name}</div>
       </div>
-      <div class="badge ${badgeCls}">${sign(changePct)}${fmt(changePct)}%</div>
+      <div class="badge ${cl(dayPct)}">${sg(dayPct)}${f(dayPct)}%</div>
     </div>
 
-    <div class="price-row">
-      <div class="price">${fmt(price)}</div>
-      <div class="price-currency">USD</div>
+    <div class="c-price-row">
+      <div class="c-price">${f(q.price)}</div>
+      <div class="c-cur">USD</div>
     </div>
-    <div class="price-change ${cls(changeDay)}">${sign(changeDay)}${fmt(changeDay)} $ aujourd'hui</div>
+    <div class="c-chg ${cl(dayChg)}">
+      ${sg(dayChg)}${f(dayChg)} $&nbsp;&nbsp;(${sg(dayEUR)}${f(dayEUR)} €) aujourd'hui
+    </div>
+    <div class="hi-lo">
+      <span>H</span> ${f(q.high)} &nbsp; <span>B</span> ${f(q.low)} &nbsp; <span>O</span> ${f(q.open)}
+    </div>
 
-    <hr class="divider-mini">
-
+    <hr class="c-sep">
     <div class="stats">
       <div>
-        <div class="stat-label">Quantité</div>
-        <div class="stat-value neutral">${qty}</div>
+        <div class="st-lbl">Quantité</div>
+        <div class="st-val nt">${qty}</div>
       </div>
       <div>
-        <div class="stat-label">Valeur</div>
-        <div class="stat-value neutral">${fmt(valueEUR)} €</div>
+        <div class="st-lbl">Valeur</div>
+        <div class="st-val nt">${f(valEUR)} €</div>
       </div>
       <div>
-        <div class="stat-label">+/- jour</div>
-        <div class="stat-value ${cls(changeDay)}">${sign(changeDay*qty/EUR_USD)}${fmt(changeDay*qty/EUR_USD)} €</div>
+        <div class="st-lbl">+/- total €</div>
+        <div class="st-val ${cl(pnlEUR)}">${sg(pnlEUR)}${f(pnlEUR)} €</div>
       </div>
       <div>
-        <div class="stat-label">+/- total</div>
-        <div class="stat-value ${cls(pnlPct)}">${sign(pnlPct)}${fmt(pnlPct)}%</div>
+        <div class="st-lbl">+/- total %</div>
+        <div class="st-val ${cl(pnlPct)}">${sg(pnlPct)}${f(pnlPct)}%</div>
       </div>
     </div>
 
-    <div class="weight-bar-track">
-      <div class="weight-bar-fill" style="width:${Math.min(weight,100)}%"></div>
+    <div class="wbar-track">
+      <div class="wbar-fill" style="width:${Math.min(weight,100).toFixed(1)}%"></div>
     </div>
-    <div class="weight-label">${fmt(weight,1)}% du portefeuille</div>
+    <div class="wbar-lbl">${f(weight,1)}% du portefeuille</div>
   </div>`;
 }
 
+// ── REFRESH ──────────────────────────────────────────────────────────────────
 async function refresh() {
-  document.getElementById('cards-container').classList.add('refreshing');
+  const cardsEl = document.getElementById('cards');
+  cardsEl.classList.add('refreshing');
+  document.getElementById('err-box').style.display = 'none';
+
   try {
-    await fetchEURUSD();
-    const quotes = await Promise.all(PORTFOLIO.map(p => fetchQuote(p.ticker)));
+    await getEURUSD();
+    const quotes = await Promise.all(PORTFOLIO.map(p => getQuote(p.ticker)));
 
-    const totalValueUSD = PORTFOLIO.reduce((s, p, i) => s + quotes[i].price * p.qty, 0);
-    const totalCostUSD  = PORTFOLIO.reduce((s, p) => s + p.costUSD * p.qty, 0);
-    const totalValueEUR = totalValueUSD / EUR_USD;
-    const totalCostEUR  = totalCostUSD  / EUR_USD;
-    const totalPnlEUR   = totalValueEUR - totalCostEUR;
-    const totalPnlPct   = (totalPnlEUR / totalCostEUR) * 100;
+    const totUSD  = PORTFOLIO.reduce((s,p,i) => s + quotes[i].price * p.qty, 0);
+    const costUSD = PORTFOLIO.reduce((s,p)   => s + p.costUSD * p.qty, 0);
+    const totEUR  = totUSD  / EURUSD;
+    const costEUR = costUSD / EURUSD;
+    const pnlEUR  = totEUR - costEUR;
+    const pnlPct  = (pnlEUR / costEUR) * 100;
 
-    // Cards
-    document.getElementById('cards-container').innerHTML =
-      PORTFOLIO.map((p, i) => buildCard(p, quotes[i], totalValueUSD)).join('');
+    cardsEl.innerHTML = PORTFOLIO.map((p,i) => buildCard(p, quotes[i], totUSD)).join('');
 
-    // Header total
-    document.getElementById('total-eur').textContent = fmt(totalValueEUR) + ' €';
-    const perfEl = document.getElementById('total-perf');
-    perfEl.textContent = `${sign(totalPnlEUR)}${fmt(totalPnlEUR)} € (${sign(totalPnlPct)}${fmt(totalPnlPct)}%)`;
-    perfEl.style.color = totalPnlPct >= 0 ? 'var(--green)' : 'var(--red)';
+    // Header
+    document.getElementById('total-val').textContent = f(totEUR) + ' €';
+    const pEl = document.getElementById('total-pnl');
+    pEl.textContent = `${sg(pnlEUR)}${f(pnlEUR)} €  (${sg(pnlPct)}${f(pnlPct)}%)`;
+    pEl.style.color = pnlPct >= 0 ? 'var(--green)' : 'var(--red)';
 
     // Summary
-    document.getElementById('sum-cost').textContent   = fmt(totalCostEUR) + ' €';
-    document.getElementById('sum-value').textContent  = fmt(totalValueEUR) + ' €';
-    const pnlEl = document.getElementById('sum-pnl');
-    pnlEl.textContent = `${sign(totalPnlEUR)}${fmt(totalPnlEUR)} €`;
-    pnlEl.style.color = totalPnlPct >= 0 ? 'var(--green)' : 'var(--red)';
-    const pnlPEl = document.getElementById('sum-pnl-pct');
-    pnlPEl.textContent = `${sign(totalPnlPct)}${fmt(totalPnlPct)} %`;
-    pnlPEl.style.color = totalPnlPct >= 0 ? 'var(--green)' : 'var(--red)';
+    document.getElementById('s-cost').textContent = f(costEUR) + ' €';
+    document.getElementById('s-val').textContent  = f(totEUR)  + ' €';
+    const spEl = document.getElementById('s-pnl');
+    spEl.textContent = `${sg(pnlEUR)}${f(pnlEUR)} €`;
+    spEl.style.color = pnlPct >= 0 ? 'var(--green)' : 'var(--red)';
+    const sppEl = document.getElementById('s-pct');
+    sppEl.textContent = `${sg(pnlPct)}${f(pnlPct)} %`;
+    sppEl.style.color = pnlPct >= 0 ? 'var(--green)' : 'var(--red)';
+    document.getElementById('s-fx').textContent = f(EURUSD, 4);
 
-    // Last update
-    document.getElementById('last-update').textContent =
-      'Mis à jour ' + new Date().toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    document.getElementById('last-upd').textContent =
+      'Mis à jour à ' + new Date().toLocaleTimeString('fr-FR');
 
-    // Cacher loader
-    const loader = document.getElementById('loader');
-    if (loader.style.display !== 'none') {
-      loader.style.opacity = '0';
-      setTimeout(() => loader.style.display = 'none', 400);
-    }
+    // Masquer loader
+    const l = document.getElementById('loader');
+    l.style.opacity = '0';
+    setTimeout(() => l.style.display = 'none', 350);
+
   } catch(err) {
     console.error(err);
-    document.getElementById('last-update').textContent = '⚠ Erreur de chargement';
+    const eb = document.getElementById('err-box');
+    eb.style.display = 'block';
+    eb.innerHTML = `⚠ Impossible de charger les cours.<br>
+      <small style="opacity:.7">${err.message}</small><br>
+      <small style="opacity:.5">Vérifiez votre connexion ou cliquez ↺ Rafraîchir</small>`;
+    document.getElementById('last-upd').textContent =
+      '⚠ Échec — ' + new Date().toLocaleTimeString('fr-FR');
+    const l = document.getElementById('loader');
+    l.style.opacity = '0';
+    setTimeout(() => l.style.display = 'none', 350);
   }
-  document.getElementById('cards-container').classList.remove('refreshing');
+
+  cardsEl.classList.remove('refreshing');
 }
 
-// ─── COUNTDOWN 60s ─────────────────────────────────────────────────────────
-let seconds = 60;
-function tick() {
-  document.getElementById('countdown').textContent = seconds + 's';
-  if (seconds <= 0) {
-    seconds = 60;
-    refresh();
-  }
-  seconds--;
+function manualRefresh() {
+  timerSec = 60;
+  const l = document.getElementById('loader');
+  l.style.display  = 'flex';
+  l.style.opacity  = '1';
+  refresh();
 }
-setInterval(tick, 1000);
 
-// ─── GTA VI COUNTDOWN ──────────────────────────────────────────────────────
-function updateGTA() {
-  const target = new Date('2026-11-19T00:00:00');
-  const now    = new Date();
-  const diff   = target - now;
-  if (diff <= 0) { document.getElementById('gta-countdown').textContent = '🎉 SORTI !'; return; }
+// ── TIMER 60s ────────────────────────────────────────────────────────────────
+setInterval(() => {
+  document.getElementById('countdown').textContent = timerSec + 's';
+  if (timerSec <= 0) { timerSec = 60; refresh(); }
+  timerSec--;
+}, 1000);
+
+// ── GTA VI ───────────────────────────────────────────────────────────────────
+function tickGTA() {
+  const diff = new Date('2026-11-19T00:00:00') - new Date();
+  if (diff <= 0) { document.getElementById('gta-val').textContent = '🎉 Sorti !'; return; }
   const d = Math.floor(diff / 86400000);
   const h = Math.floor((diff % 86400000) / 3600000);
   const m = Math.floor((diff % 3600000)  / 60000);
-  document.getElementById('gta-countdown').textContent = `J-${d}  ${h}h ${m}min`;
+  document.getElementById('gta-val').textContent = `J-${d} · ${h}h ${m}min`;
 }
-updateGTA();
-setInterval(updateGTA, 60000);
+tickGTA();
+setInterval(tickGTA, 30000);
 
-// ─── INIT ──────────────────────────────────────────────────────────────────
+// ── INIT ─────────────────────────────────────────────────────────────────────
 refresh();
 </script>
 </body>
