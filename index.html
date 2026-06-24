@@ -1,404 +1,392 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Terminal de Trading</title>
-    <style>
-        :root {
-            --bg-color: #000000;
-            --glass-bg: rgba(28, 28, 30, 0.45);
-            --glass-border: rgba(255, 255, 255, 0.06);
-            --text-main: #ffffff;
-            --text-muted: #8e8e93;
-            --text-subtle: #48484a;
-            --apple-green: #32d74b;
-            --apple-green-bg: rgba(50, 215, 75, 0.1);
-            --apple-red: #ff453a;
-            --apple-red-bg: rgba(255, 69, 58, 0.1);
-            --apple-blue: #0a84ff;
-            --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        /* Verrouillage strict de la page pour empêcher le scroll */
-        html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background-color: var(--bg-color);
-        }
+  :root {
+    --bg:       #0a0a0f;
+    --surface:  #111118;
+    --border:   #1e1e2e;
+    --muted:    #3a3a50;
+    --text:     #e8e8f0;
+    --sub:      #6b6b8a;
+    --green:    #3ddc84;
+    --red:      #ff5f6d;
+    --accent:   #5c6bc0;
+    --gold:     #c9a84c;
+  }
 
-        body {
-            background-image: 
-                radial-gradient(circle at 10% 15%, rgba(10, 132, 255, 0.1), transparent 30%),
-                radial-gradient(circle at 90% 45%, rgba(50, 215, 75, 0.06), transparent 30%);
-            color: var(--text-main);
-            font-family: var(--font);
-            -webkit-font-smoothing: antialiased;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    min-height: 100vh;
+    padding: 24px 16px 40px;
+  }
 
-        /* Conteneur calé au pixel près sur le viewport */
-        .container {
-            width: 100%;
-            max-width: 440px; 
-            height: 100dvh;
-            box-sizing: border-box;
-            padding: 20px 16px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between; /* Aligne Header, Cards et Dock sans vide */
-        }
+  /* ── HEADER ── */
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 32px;
+  }
+  .brand { font-size: 11px; color: var(--sub); letter-spacing: 0.18em; text-transform: uppercase; }
+  .total-label { font-size: 11px; color: var(--sub); letter-spacing: 0.12em; margin-bottom: 4px; }
+  .total-value { font-size: 36px; font-weight: 700; letter-spacing: -0.02em; }
+  .total-perf { font-size: 13px; margin-top: 4px; }
+  .refresh-info { text-align: right; }
+  .refresh-info span { font-size: 10px; color: var(--sub); display: block; }
+  #countdown { font-size: 18px; color: var(--accent); font-weight: 700; }
+  #last-update { font-size: 10px; color: var(--muted); margin-top: 2px; }
 
-        /* --- HEADER COMPACT --- */
-        .header {
-            text-align: center;
-            margin-bottom: 15px;
-        }
+  /* ── DIVIDER ── */
+  hr { border: none; border-top: 1px solid var(--border); margin: 0 0 24px; }
 
-        .header h1 {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--text-muted);
-            margin: 0 0 4px 0;
-            font-weight: 600;
-        }
+  /* ── CARDS GRID ── */
+  .cards { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 28px; }
+  @media(min-width:600px){ .cards { grid-template-columns: 1fr 1fr; } }
+  @media(min-width:900px){ .cards { grid-template-columns: 1fr 1fr 1fr; } }
 
-        .total-value-eur {
-            font-size: 46px;
-            font-weight: 700;
-            letter-spacing: -1.5px;
-            margin: 0;
-            line-height: 1;
-        }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+    transition: border-color .2s;
+  }
+  .card:hover { border-color: var(--muted); }
+  .card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+  .ticker { font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: var(--accent); }
+  .company { font-size: 10px; color: var(--sub); margin-top: 2px; letter-spacing: 0.05em; }
+  .badge {
+    font-size: 10px; font-weight: 700; padding: 3px 8px;
+    border-radius: 20px; letter-spacing: 0.08em;
+  }
+  .badge.up   { background: rgba(61,220,132,.12); color: var(--green); }
+  .badge.down { background: rgba(255,95,109,.12);  color: var(--red); }
+  .badge.flat { background: rgba(107,107,138,.12); color: var(--sub); }
 
-        .total-value-usd {
-            font-size: 17px;
-            color: var(--text-muted);
-            font-weight: 500;
-            margin: 2px 0 10px 0;
-        }
+  .price-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+  .price { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; }
+  .price-currency { font-size: 12px; color: var(--sub); }
+  .price-change { font-size: 12px; }
+  .price-change.up   { color: var(--green); }
+  .price-change.down { color: var(--red); }
 
-        .total-pl {
-            display: inline-flex;
-            padding: 6px 12px;
-            border-radius: 14px;
-            font-size: 14px;
-            font-weight: 600;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255,255,255,0.02);
-        }
+  .divider-mini { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
 
-        .up { color: var(--apple-green); }
-        .down { color: var(--apple-red); }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat-label { font-size: 9px; color: var(--sub); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 3px; }
+  .stat-value { font-size: 14px; font-weight: 600; }
+  .stat-value.up   { color: var(--green); }
+  .stat-value.down { color: var(--red); }
+  .stat-value.neutral { color: var(--text); }
 
-        /* --- ZONE DES CARTES --- */
-        .assets-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px; /* Espace optimisé */
-            flex-grow: 1;
-            justify-content: center; /* Centre les cartes verticalement si l'écran est grand */
-            margin: 10px 0;
-        }
+  /* bar de poids */
+  .weight-bar-track {
+    height: 3px; background: var(--border); border-radius: 2px; margin-top: 14px;
+  }
+  .weight-bar-fill {
+    height: 3px; border-radius: 2px; background: var(--accent); transition: width .4s;
+  }
+  .weight-label { font-size: 9px; color: var(--muted); text-align: right; margin-top: 4px; }
 
-        /* --- CARTE ULTRA-COMPACTE (GLASSMORPHISM) --- */
-        .asset-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(30px) saturate(200%);
-            -webkit-backdrop-filter: blur(30px) saturate(200%);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 14px 16px;
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
+  /* spinner */
+  .loading-overlay {
+    position: fixed; inset: 0; background: var(--bg);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 99; transition: opacity .4s;
+  }
+  .spinner {
+    width: 36px; height: 36px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+    margin-bottom: 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 12px; color: var(--sub); letter-spacing: 0.12em; }
 
-        /* Ligne Principale (Ticker & Prix Totaux) */
-        .row-main {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+  /* ── SUMMARY BAR ── */
+  .summary {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    display: flex; flex-wrap: wrap; gap: 20px;
+  }
+  .summary-item { flex: 1; min-width: 120px; }
+  .summary-item .s-label { font-size: 9px; color: var(--sub); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 4px; }
+  .summary-item .s-val   { font-size: 16px; font-weight: 700; }
 
-        .ticker-info { display: flex; align-items: baseline; gap: 6px; }
-        .asset-ticker { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
-        .asset-shares { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+  /* ── ERROR ── */
+  .error-msg { font-size: 11px; color: var(--red); margin-top: 6px; display: none; }
 
-        .price-info { text-align: right; }
-        .asset-total-eur { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
-        .asset-total-usd { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+  /* pulse quand refresh */
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+  .refreshing .price { animation: pulse .6s ease-in-out 2; }
 
-        /* Ligne Secondaire (PRU, Cours actuel & Gain/Perte) */
-        .row-details {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 13px;
-        }
-
-        .market-data { color: var(--text-muted); font-weight: 500; line-height: 1.4; }
-        .market-data span { color: var(--text-main); font-weight: 600; }
-
-        .pl-data { text-align: right; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-        .pl-usd { font-size: 11px; opacity: 0.7; font-weight: 500; }
-
-        /* Badge pourcentages discrets */
-        .trend-badge {
-            padding: 2px 6px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 700;
-        }
-        .trend-up { background: var(--apple-green-bg); color: var(--apple-green); }
-        .trend-down { background: var(--apple-red-bg); color: var(--apple-red); }
-
-        /* Ligne Stratégie intégrée au bas de la carte */
-        .row-strategy {
-            font-size: 11px;
-            color: var(--text-muted);
-            background: rgba(0,0,0,0.15);
-            padding: 6px 10px;
-            border-radius: 10px;
-            border: 1px solid rgba(255,255,255,0.02);
-        }
-        .strat-title { color: var(--apple-blue); font-weight: 600; margin-right: 4px; }
-        
-        /* Barre de progression miniature */
-        .mini-progress-bar {
-            width: 100%;
-            height: 3px;
-            background: rgba(255,255,255,0.08);
-            border-radius: 1.5px;
-            margin-top: 4px;
-            overflow: hidden;
-        }
-        .mini-progress-fill { height: 100%; background: var(--apple-blue); transition: width 0.5s; }
-
-        /* --- LE DOCK IOS (TOUT EN UN BAS DE PAGE) --- */
-        .bottom-dock {
-            background: rgba(28, 28, 30, 0.6);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            padding: 10px 14px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .dock-meta { font-size: 10px; color: var(--text-subtle); font-weight: 600; line-height: 1.3; text-transform: uppercase; }
-        .dock-meta span { color: var(--text-muted); }
-
-        .dock-input-group { display: flex; align-items: center; gap: 6px; }
-        .dock-input-group label { font-size: 11px; font-weight: 700; color: var(--text-muted); }
-        .dock-input-group input {
-            background: rgba(0, 0, 0, 0.4);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 6px 8px;
-            border-radius: 8px;
-            width: 55px;
-            font-size: 12px;
-            font-weight: 600;
-            outline: none;
-            text-align: center;
-        }
-        .dock-input-group button {
-            background: var(--text-main);
-            color: var(--bg-color);
-            border: none;
-            padding: 6px 10px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 700;
-            font-size: 11px;
-        }
-    </style>
+  /* GTA countdown banner */
+  .banner {
+    background: linear-gradient(90deg, rgba(92,107,192,.15), rgba(201,168,76,.08));
+    border: 1px solid rgba(201,168,76,.2);
+    border-radius: 10px;
+    padding: 12px 18px;
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 20px;
+    font-size: 12px;
+  }
+  .banner-icon { font-size: 20px; }
+  .banner-label { color: var(--sub); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .banner-val { color: var(--gold); font-weight: 700; font-size: 15px; }
+</style>
 </head>
 <body>
 
-    <div class="container">
-        <div class="header">
-            <h1>Solde du Portefeuille</h1>
-            <div id="total-value-eur" class="total-value-eur">--</div>
-            <div id="total-value-usd" class="total-value-usd">--</div>
-            <div id="total-pl" class="total-pl">--</div>
-        </div>
+<div class="loading-overlay" id="loader">
+  <div class="spinner"></div>
+  <div class="loading-text">CHARGEMENT DES COURS…</div>
+</div>
 
-        <div id="assets-container" class="assets-list">
-            </div>
+<header>
+  <div>
+    <div class="brand">Portfolio Tracker</div>
+    <div class="total-label" style="margin-top:14px;">VALEUR TOTALE</div>
+    <div class="total-value" id="total-eur">— €</div>
+    <div class="total-perf" id="total-perf">—</div>
+  </div>
+  <div class="refresh-info">
+    <span>Actualisation dans</span>
+    <div id="countdown">60</div>
+    <span id="last-update">—</span>
+  </div>
+</header>
 
-        <div class="bottom-dock">
-            <div class="dock-meta">
-                <div id="exchange-rate-display">EUR/USD : --</div>
-                <div id="last-update">Sync : --</div>
-            </div>
-            <div class="dock-input-group">
-                <label>SPCX $</label>
-                <input type="number" id="spcx-manual-input" step="0.01" placeholder="166.84">
-                <button onclick="applyManualSpcx()">OK</button>
-            </div>
-        </div>
+<hr>
+
+<!-- GTA VI countdown -->
+<div class="banner">
+  <div class="banner-icon">🎮</div>
+  <div>
+    <div class="banner-label">GTA VI — 19 nov 2026</div>
+    <div class="banner-val" id="gta-countdown">calcul…</div>
+  </div>
+</div>
+
+<!-- Cards -->
+<div class="cards" id="cards-container"></div>
+
+<!-- Summary -->
+<div class="summary" id="summary">
+  <div class="summary-item">
+    <div class="s-label">Investi (coût)</div>
+    <div class="s-val" id="sum-cost">—</div>
+  </div>
+  <div class="summary-item">
+    <div class="s-label">Valeur actuelle</div>
+    <div class="s-val" id="sum-value">—</div>
+  </div>
+  <div class="summary-item">
+    <div class="s-label">+/- latent €</div>
+    <div class="s-val" id="sum-pnl">—</div>
+  </div>
+  <div class="summary-item">
+    <div class="s-label">+/- latent %</div>
+    <div class="s-val" id="sum-pnl-pct">—</div>
+  </div>
+</div>
+
+<script>
+// ─── CONFIGURATION DU PORTEFEUILLE ─────────────────────────────────────────
+// Modifie ici si tu changes tes positions
+const PORTFOLIO = [
+  { ticker: 'TTWO',  name: 'Take-Two Interactive', qty: 2.34,  costUSD: 207.00 },
+  { ticker: 'SONY',  name: 'Sony Group Corp.',      qty: 1.88,  costUSD:  20.10 },
+  { ticker: 'NVDA',  name: 'NVIDIA Corporation',    qty: 0.17,  costUSD: 210.00 },
+];
+
+// Taux EUR/USD fixe de secours (sera remplacé par le live)
+let EUR_USD = 1.085;
+
+// ─── PROXY Yahoo Finance (évite CORS) ──────────────────────────────────────
+// On utilise un proxy public gratuit no-cors-compatible
+async function fetchQuote(ticker) {
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1m&range=1d`;
+  const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+  const res = await fetch(proxy);
+  const json = await res.json();
+  const data = JSON.parse(json.contents);
+  const meta = data.chart.result[0].meta;
+  return {
+    price:         meta.regularMarketPrice,
+    prevClose:     meta.chartPreviousClose || meta.previousClose,
+    currency:      meta.currency,
+    marketState:   meta.marketState, // REGULAR / PRE / POST / CLOSED
+  };
+}
+
+async function fetchEURUSD() {
+  try {
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/EURUSD=X?interval=1m&range=1d`;
+    const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+    const res = await fetch(proxy);
+    const json = await res.json();
+    const data = JSON.parse(json.contents);
+    EUR_USD = data.chart.result[0].meta.regularMarketPrice;
+  } catch(e) { /* utilise valeur par défaut */ }
+}
+
+// ─── RENDU ─────────────────────────────────────────────────────────────────
+function sign(n) { return n >= 0 ? '+' : ''; }
+function cls(n)  { return n > 0 ? 'up' : n < 0 ? 'down' : 'flat'; }
+function fmt(n, dec=2) { return n.toLocaleString('fr-FR', {minimumFractionDigits:dec, maximumFractionDigits:dec}); }
+
+function buildCard(item, quote, totalValueUSD) {
+  const { ticker, name, qty, costUSD } = item;
+  const { price, prevClose, marketState } = quote;
+
+  const changeDay   = price - prevClose;
+  const changePct   = (changeDay / prevClose) * 100;
+  const valueUSD    = price * qty;
+  const valueEUR    = valueUSD / EUR_USD;
+  const costEUR     = costUSD * qty / EUR_USD;
+  const pnlEUR      = valueEUR - costEUR;
+  const pnlPct      = ((price - costUSD) / costUSD) * 100;
+  const weight      = (valueUSD / totalValueUSD) * 100;
+
+  const stateLabel  = marketState === 'REGULAR' ? '● LIVE' : marketState === 'PRE' ? '◐ PRÉ' : '○ FERMÉ';
+
+  const badgeCls = cls(changePct);
+
+  return `
+  <div class="card" id="card-${ticker}">
+    <div class="card-top">
+      <div>
+        <div class="ticker">${ticker} <span style="font-size:9px;color:var(--muted);font-weight:400;">${stateLabel}</span></div>
+        <div class="company">${name}</div>
+      </div>
+      <div class="badge ${badgeCls}">${sign(changePct)}${fmt(changePct)}%</div>
     </div>
 
-    <script>
-        const API_KEY = 'd8nou8hr01qvvn99oe20d8nou8hr01qvvn99oe2g'; 
+    <div class="price-row">
+      <div class="price">${fmt(price)}</div>
+      <div class="price-currency">USD</div>
+    </div>
+    <div class="price-change ${cls(changeDay)}">${sign(changeDay)}${fmt(changeDay)} $ aujourd'hui</div>
 
-        const portfolio = [
-            { ticker: 'TTWO', name: 'Take-Two', shares: 1.72064278, pru: 211.68 },
-            { ticker: 'SPCX', name: 'SpaceX', shares: 1.00000000, pru: 135.00 },
-            { ticker: 'NVDA', name: 'NVIDIA', shares: 0.34674018, pru: 210.04 }
-        ];
+    <hr class="divider-mini">
 
-        const strategies = {
-            'TTWO': { title: '🎯 TARGET', desc: 'Ordre Limit de vente calé à 250 $.', targetPrice: 250 },
-            'SPCX': { title: '💎 HOLD', desc: 'Fonds de tiroir. Objectif Jackpot.', targetPrice: null },
-            'NVDA': { title: '⏳ HOLD', desc: 'En sommeil. Renfort prévu via cash TTWO.', targetPrice: null }
-        };
+    <div class="stats">
+      <div>
+        <div class="stat-label">Quantité</div>
+        <div class="stat-value neutral">${qty}</div>
+      </div>
+      <div>
+        <div class="stat-label">Valeur</div>
+        <div class="stat-value neutral">${fmt(valueEUR)} €</div>
+      </div>
+      <div>
+        <div class="stat-label">+/- jour</div>
+        <div class="stat-value ${cls(changeDay)}">${sign(changeDay*qty/EUR_USD)}${fmt(changeDay*qty/EUR_USD)} €</div>
+      </div>
+      <div>
+        <div class="stat-label">+/- total</div>
+        <div class="stat-value ${cls(pnlPct)}">${sign(pnlPct)}${fmt(pnlPct)}%</div>
+      </div>
+    </div>
 
-        let manualSpcxPrice = null;
+    <div class="weight-bar-track">
+      <div class="weight-bar-fill" style="width:${Math.min(weight,100)}%"></div>
+    </div>
+    <div class="weight-label">${fmt(weight,1)}% du portefeuille</div>
+  </div>`;
+}
 
-        function applyManualSpcx() {
-            const inputVal = document.getElementById('spcx-manual-input').value;
-            if (inputVal && !isNaN(inputVal)) {
-                manualSpcxPrice = parseFloat(inputVal);
-                updateDashboard(); 
-            }
-        }
+async function refresh() {
+  document.getElementById('cards-container').classList.add('refreshing');
+  try {
+    await fetchEURUSD();
+    const quotes = await Promise.all(PORTFOLIO.map(p => fetchQuote(p.ticker)));
 
-        async function fetchExchangeRate() {
-            try {
-                const response = await fetch('https://api.coinbase.com/v2/exchange-rates?currency=USD');
-                const data = await response.json();
-                return parseFloat(data.data.rates.EUR);
-            } catch (error) {
-                console.error("Erreur change:", error);
-                return 0.93; 
-            }
-        }
+    const totalValueUSD = PORTFOLIO.reduce((s, p, i) => s + quotes[i].price * p.qty, 0);
+    const totalCostUSD  = PORTFOLIO.reduce((s, p) => s + p.costUSD * p.qty, 0);
+    const totalValueEUR = totalValueUSD / EUR_USD;
+    const totalCostEUR  = totalCostUSD  / EUR_USD;
+    const totalPnlEUR   = totalValueEUR - totalCostEUR;
+    const totalPnlPct   = (totalPnlEUR / totalCostEUR) * 100;
 
-        async function fetchPrice(ticker) {
-            if (ticker === 'SPCX') {
-                return manualSpcxPrice !== null ? manualSpcxPrice : 166.84;
-            }
-            try {
-                const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${API_KEY}`);
-                const data = await response.json();
-                if (data.c === 0 || !data.c) return null; 
-                return data.c;
-            } catch (error) {
-                console.error(`Erreur ${ticker}:`, error);
-                return null;
-            }
-        }
+    // Cards
+    document.getElementById('cards-container').innerHTML =
+      PORTFOLIO.map((p, i) => buildCard(p, quotes[i], totalValueUSD)).join('');
 
-        async function updateDashboard() {
-            const eurRate = await fetchExchangeRate();
-            document.getElementById('exchange-rate-display').innerHTML = `EUR/USD : <span>${eurRate.toFixed(4)}</span>`;
+    // Header total
+    document.getElementById('total-eur').textContent = fmt(totalValueEUR) + ' €';
+    const perfEl = document.getElementById('total-perf');
+    perfEl.textContent = `${sign(totalPnlEUR)}${fmt(totalPnlEUR)} € (${sign(totalPnlPct)}${fmt(totalPnlPct)}%)`;
+    perfEl.style.color = totalPnlPct >= 0 ? 'var(--green)' : 'var(--red)';
 
-            const container = document.getElementById('assets-container');
-            container.innerHTML = ''; 
+    // Summary
+    document.getElementById('sum-cost').textContent   = fmt(totalCostEUR) + ' €';
+    document.getElementById('sum-value').textContent  = fmt(totalValueEUR) + ' €';
+    const pnlEl = document.getElementById('sum-pnl');
+    pnlEl.textContent = `${sign(totalPnlEUR)}${fmt(totalPnlEUR)} €`;
+    pnlEl.style.color = totalPnlPct >= 0 ? 'var(--green)' : 'var(--red)';
+    const pnlPEl = document.getElementById('sum-pnl-pct');
+    pnlPEl.textContent = `${sign(totalPnlPct)}${fmt(totalPnlPct)} %`;
+    pnlPEl.style.color = totalPnlPct >= 0 ? 'var(--green)' : 'var(--red)';
 
-            let totalInvestedUsd = 0;
-            let totalCurrentValueUsd = 0;
+    // Last update
+    document.getElementById('last-update').textContent =
+      'Mis à jour ' + new Date().toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
 
-            for (const asset of portfolio) {
-                const currentPriceUsd = await fetchPrice(asset.ticker);
-                const priceToUseUsd = currentPriceUsd || asset.pru; 
+    // Cacher loader
+    const loader = document.getElementById('loader');
+    if (loader.style.display !== 'none') {
+      loader.style.opacity = '0';
+      setTimeout(() => loader.style.display = 'none', 400);
+    }
+  } catch(err) {
+    console.error(err);
+    document.getElementById('last-update').textContent = '⚠ Erreur de chargement';
+  }
+  document.getElementById('cards-container').classList.remove('refreshing');
+}
 
-                const investedValueUsd = asset.shares * asset.pru;
-                const currentValueUsd = asset.shares * priceToUseUsd;
-                const plValueUsd = currentValueUsd - investedValueUsd;
-                const plPercent = (plValueUsd / investedValueUsd) * 100;
+// ─── COUNTDOWN 60s ─────────────────────────────────────────────────────────
+let seconds = 60;
+function tick() {
+  document.getElementById('countdown').textContent = seconds + 's';
+  if (seconds <= 0) {
+    seconds = 60;
+    refresh();
+  }
+  seconds--;
+}
+setInterval(tick, 1000);
 
-                const currentValueEur = currentValueUsd * eurRate;
-                const plValueEur = plValueUsd * eurRate;
+// ─── GTA VI COUNTDOWN ──────────────────────────────────────────────────────
+function updateGTA() {
+  const target = new Date('2026-11-19T00:00:00');
+  const now    = new Date();
+  const diff   = target - now;
+  if (diff <= 0) { document.getElementById('gta-countdown').textContent = '🎉 SORTI !'; return; }
+  const d = Math.floor(diff / 86400000);
+  const h = Math.floor((diff % 86400000) / 3600000);
+  const m = Math.floor((diff % 3600000)  / 60000);
+  document.getElementById('gta-countdown').textContent = `J-${d}  ${h}h ${m}min`;
+}
+updateGTA();
+setInterval(updateGTA, 60000);
 
-                totalInvestedUsd += investedValueUsd;
-                totalCurrentValueUsd += currentValueUsd;
-
-                const isUp = plValueUsd >= 0;
-                const colorClass = isUp ? 'up' : 'down';
-                const trendClass = isUp ? 'trend-up' : 'trend-down';
-                const sign = isUp ? '+' : '';
-
-                const strat = strategies[asset.ticker];
-                let progressHtml = '';
-
-                if (strat.targetPrice) {
-                    const progress = Math.min((priceToUseUsd / strat.targetPrice) * 100, 100);
-                    progressHtml = `
-                        <div class="mini-progress-bar">
-                            <div class="mini-progress-fill" style="width: ${progress}%;"></div>
-                        </div>
-                    `;
-                }
-
-                const card = document.createElement('div');
-                card.className = 'asset-card';
-                card.innerHTML = `
-                    <div class="row-main">
-                        <div class="ticker-info">
-                            <span class="asset-ticker">${asset.ticker}</span>
-                            <span class="asset-shares">${asset.shares.toFixed(3)} parts</span>
-                        </div>
-                        <div class="price-info">
-                            <div class="asset-total-eur">${currentValueEur.toFixed(2)} €</div>
-                            <div class="asset-total-usd">${currentValueUsd.toFixed(2)} $</div>
-                        </div>
-                    </div>
-
-                    <div class="row-details">
-                        <div class="market-data">
-                            PRU: <span>${asset.pru.toFixed(2)}$</span> • Cours: <span>${priceToUseUsd.toFixed(2)}$</span>
-                        </div>
-                        <div class="pl-data ${colorClass}">
-                            <span class="pl-usd">${sign}${plValueUsd.toFixed(1)}$</span>
-                            <span>${sign}${plValueEur.toFixed(2)}€</span>
-                            <span class="trend-badge ${trendClass}">${sign}${Math.abs(plPercent).toFixed(1)}%</span>
-                        </div>
-                    </div>
-
-                    <div class="row-strategy">
-                        <span class="strat-title">${strat.title}</span> ${strat.desc}
-                        ${progressHtml}
-                    </div>
-                `;
-                container.appendChild(card);
-            }
-
-            const totalCurrentValueEur = totalCurrentValueUsd * eurRate;
-            const totalPlValueUsd = totalCurrentValueUsd - totalInvestedUsd;
-            const totalPlValueEur = totalPlValueUsd * eurRate;
-            const totalPlPercent = (totalPlValueUsd / totalInvestedUsd) * 100;
-            const isTotalUp = totalPlValueUsd >= 0;
-
-            document.getElementById('total-value-eur').innerText = `${totalCurrentValueEur.toFixed(2)} €`;
-            document.getElementById('total-value-usd').innerText = `~ ${totalCurrentValueUsd.toFixed(2)} $`;
-            
-            const totalPlElement = document.getElementById('total-pl');
-            totalPlElement.innerHTML = `
-                ${isTotalUp ? '+' : ''}${totalPlValueEur.toFixed(2)} € 
-                &nbsp;•&nbsp; ${isTotalUp ? '+' : ''}${totalPlPercent.toFixed(1)} %
-            `;
-            totalPlElement.className = `total-pl ${isTotalUp ? 'up' : 'down'}`;
-
-            const now = new Date();
-            document.getElementById('last-update').innerHTML = `Sync : <span>${now.toLocaleTimeString('fr-FR').slice(0, 5)}</span>`;
-        }
-
-        updateDashboard();
-        setInterval(updateDashboard, 60000); 
-
-    </script>
+// ─── INIT ──────────────────────────────────────────────────────────────────
+refresh();
+</script>
 </body>
 </html>
