@@ -2,367 +2,399 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portfolio Tracker</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Portfolio</title>
 <style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  :root{
-    --bg:#09090e;--surf:#111119;--border:#1a1a2a;--muted:#2e2e45;
-    --text:#e2e2ee;--sub:#5a5a7a;--green:#3ddc84;--red:#ff5f6d;
-    --accent:#6c7ae0;--gold:#c9a84c;
-  }
-  body{
-    background:var(--bg);color:var(--text);
-    font-family:'SF Mono','Fira Code',Consolas,monospace;
-    min-height:100vh;padding:20px 14px 48px;
-    max-width:980px;margin:0 auto;
-  }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  /* HEADER */
-  .hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px;gap:12px;flex-wrap:wrap}
-  .brand{font-size:10px;color:var(--sub);letter-spacing:.18em;text-transform:uppercase}
-  .total-lbl{font-size:10px;color:var(--sub);letter-spacing:.1em;margin-top:14px;margin-bottom:3px}
-  .total-val{font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1}
-  .total-pnl{font-size:13px;margin-top:5px}
-  .hdr-right{text-align:right}
-  .rlbl{font-size:10px;color:var(--sub);letter-spacing:.08em}
-  .countdown{font-size:24px;font-weight:700;color:var(--accent);line-height:1.1}
-  .last-upd{font-size:10px;color:var(--muted);margin-top:3px}
+:root {
+  --bg:         #000000;
+  --bg2:        #1c1c1e;
+  --bg3:        #2c2c2e;
+  --sep:        rgba(255,255,255,.1);
+  --text:       #ffffff;
+  --text2:      rgba(255,255,255,.55);
+  --text3:      rgba(255,255,255,.3);
+  --green:      #30d158;
+  --red:        #ff453a;
+  --blue:       #0a84ff;
+  --r:          14px;
+}
 
-  hr.div{border:none;border-top:1px solid var(--border);margin:0 0 18px}
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  padding: env(safe-area-inset-top, 0) 0 env(safe-area-inset-bottom, 40px);
+  min-height: 100svh;
+}
 
-  /* BANNER GTA */
-  .banner{
-    display:flex;align-items:center;gap:14px;
-    background:linear-gradient(90deg,rgba(108,122,224,.1),rgba(201,168,76,.06));
-    border:1px solid rgba(201,168,76,.18);border-radius:10px;
-    padding:11px 16px;margin-bottom:18px;
-  }
-  .banner-ico{font-size:22px}
-  .banner-lbl{font-size:9px;color:var(--sub);letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px}
-  .banner-val{font-size:14px;font-weight:700;color:var(--gold)}
+/* ── SCROLL WRAPPER ── */
+.scroll { padding: 0 16px 32px; max-width: 430px; margin: 0 auto; }
 
-  /* CARDS */
-  .cards{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:20px}
-  @media(min-width:560px){.cards{grid-template-columns:1fr 1fr}}
-  @media(min-width:840px){.cards{grid-template-columns:1fr 1fr 1fr}}
+/* ── STATUS BAR SPACER ── */
+.topbar { height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; }
+.topbar-title { font-size: 17px; font-weight: 600; letter-spacing: -.3px; }
+.topbar-btn {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--bg2); border: none; color: var(--text2);
+  font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background .15s;
+}
+.topbar-btn:active { background: var(--bg3); }
 
-  .card{
-    background:var(--surf);border:1px solid var(--border);
-    border-radius:12px;padding:18px;transition:border-color .2s;
-  }
-  .card:hover{border-color:var(--muted)}
-  .c-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
-  .c-ticker{font-size:13px;font-weight:700;letter-spacing:.08em;color:var(--accent)}
-  .c-name{font-size:10px;color:var(--sub);margin-top:2px}
+/* ── HERO ── */
+.hero { text-align: center; padding: 8px 0 32px; }
+.hero-label { font-size: 13px; font-weight: 500; color: var(--text2); letter-spacing: .3px; margin-bottom: 6px; }
+.hero-value { font-size: 52px; font-weight: 700; letter-spacing: -2px; line-height: 1; }
+.hero-pnl   { font-size: 17px; font-weight: 500; margin-top: 6px; }
+.hero-time  { font-size: 12px; color: var(--text3); margin-top: 4px; }
 
-  .badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.06em;white-space:nowrap}
-  .up{color:var(--green)}.dn{color:var(--red)}.fl{color:var(--sub)}
-  .badge.up{background:rgba(61,220,132,.1)}.badge.dn{background:rgba(255,95,109,.1)}.badge.fl{background:rgba(90,90,122,.1)}
+/* ── SECTION LABEL ── */
+.section-label {
+  font-size: 13px; font-weight: 600; color: var(--text2);
+  letter-spacing: .5px; text-transform: uppercase;
+  margin: 24px 0 8px;
+}
 
-  .c-price-row{display:flex;align-items:baseline;gap:6px;margin-bottom:3px}
-  .c-price{font-size:24px;font-weight:700;letter-spacing:-.02em}
-  .c-cur{font-size:11px;color:var(--sub)}
-  .c-chg{font-size:11px;margin-bottom:12px}
+/* ── LIST CARD ── */
+.list {
+  background: var(--bg2);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+.list-row {
+  display: flex; align-items: center;
+  padding: 14px 16px; gap: 12px;
+  position: relative;
+}
+.list-row + .list-row::before {
+  content: '';
+  position: absolute; top: 0; left: 60px; right: 0;
+  height: 1px; background: var(--sep);
+}
 
-  .hi-lo{font-size:10px;color:var(--sub);margin-bottom:10px}
-  .hi-lo span{color:var(--muted)}
+/* icone ticker */
+.ticker-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: var(--bg3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 700; color: var(--text); flex-shrink: 0;
+  letter-spacing: -.5px;
+}
+.icon-ttwo { background: #1a1aff; }
+.icon-sony { background: #1a1a1a; border: 1px solid rgba(255,255,255,.12); }
+.icon-nvda { background: #76b900; }
 
-  .c-sep{border:none;border-top:1px solid var(--border);margin:10px 0}
-  .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .st-lbl{font-size:9px;color:var(--sub);letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px}
-  .st-val{font-size:13px;font-weight:600}
-  .st-val.nt{color:var(--text)}
+.row-mid { flex: 1; min-width: 0; }
+.row-name  { font-size: 15px; font-weight: 600; letter-spacing: -.2px; }
+.row-sub   { font-size: 13px; color: var(--text2); margin-top: 1px; }
 
-  .wbar-track{height:2px;background:var(--muted);border-radius:2px;margin-top:14px}
-  .wbar-fill{height:2px;border-radius:2px;background:var(--accent);transition:width .5s}
-  .wbar-lbl{font-size:9px;color:var(--sub);text-align:right;margin-top:3px}
+.row-right { text-align: right; flex-shrink: 0; }
+.row-val   { font-size: 15px; font-weight: 600; letter-spacing: -.2px; }
+.row-chg   { font-size: 13px; margin-top: 1px; font-weight: 500; }
 
-  /* SUMMARY */
-  .summary{
-    background:var(--surf);border:1px solid var(--border);
-    border-radius:12px;padding:14px 18px;
-    display:flex;flex-wrap:wrap;gap:16px;margin-bottom:16px;
-  }
-  .sum-item{flex:1;min-width:100px}
-  .s-lbl{font-size:9px;color:var(--sub);letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px}
-  .s-val{font-size:15px;font-weight:700}
+/* ── STATS GRID ── */
+.stats-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.stat-card {
+  background: var(--bg2); border-radius: var(--r);
+  padding: 14px 16px;
+}
+.stat-label { font-size: 12px; color: var(--text2); font-weight: 500; margin-bottom: 4px; }
+.stat-value { font-size: 20px; font-weight: 700; letter-spacing: -.5px; }
 
-  /* ERR */
-  .err-box{
-    background:rgba(255,95,109,.07);border:1px solid rgba(255,95,109,.18);
-    border-radius:10px;padding:13px 16px;font-size:11px;color:var(--red);
-    display:none;margin-bottom:16px;line-height:1.6;
-  }
+/* ── GTA BANNER ── */
+.gta-banner {
+  background: var(--bg2); border-radius: var(--r);
+  padding: 14px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.gta-left { display: flex; align-items: center; gap: 12px; }
+.gta-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: linear-gradient(135deg, #ff6b35, #ff2d55);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+}
+.gta-label { font-size: 13px; font-weight: 600; }
+.gta-sub   { font-size: 12px; color: var(--text2); margin-top: 1px; }
+.gta-countdown { font-size: 15px; font-weight: 700; color: var(--blue); white-space: nowrap; }
 
-  /* LOADER */
-  .loader{
-    position:fixed;inset:0;background:var(--bg);z-index:99;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    transition:opacity .35s;
-  }
-  .spinner{
-    width:34px;height:34px;border:3px solid var(--border);
-    border-top-color:var(--accent);border-radius:50%;
-    animation:spin .75s linear infinite;margin-bottom:14px;
-  }
-  @keyframes spin{to{transform:rotate(360deg)}}
-  .loader-txt{font-size:11px;color:var(--sub);letter-spacing:.12em}
+/* ── REFRESH ROW ── */
+.refresh-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 0 0;
+}
+.refresh-text { font-size: 12px; color: var(--text3); }
+.refresh-pill {
+  background: var(--bg2); border: none; color: var(--blue);
+  font-family: inherit; font-size: 13px; font-weight: 600;
+  padding: 6px 14px; border-radius: 20px; cursor: pointer;
+  transition: opacity .15s;
+}
+.refresh-pill:active { opacity: .6; }
 
-  /* BTN */
-  .btn-row{display:flex;gap:8px;margin-top:8px;justify-content:flex-end}
-  .btn{
-    background:var(--surf);border:1px solid var(--border);color:var(--sub);
-    font-family:inherit;font-size:10px;padding:6px 12px;border-radius:8px;
-    cursor:pointer;transition:border-color .2s,color .2s;letter-spacing:.06em;
-  }
-  .btn:hover{border-color:var(--accent);color:var(--accent)}
+/* ── LOADER ── */
+.loader {
+  position: fixed; inset: 0; background: #000;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 16px; z-index: 99; transition: opacity .3s;
+}
+.loader-spinner {
+  width: 28px; height: 28px;
+  border: 2.5px solid rgba(255,255,255,.15);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loader-text { font-size: 13px; color: rgba(255,255,255,.4); font-weight: 500; }
 
-  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-  .refreshing .c-price{animation:pulse .6s ease-in-out 2}
+/* ── ERROR ── */
+.error-banner {
+  background: rgba(255,69,58,.12);
+  border-radius: var(--r); padding: 12px 16px;
+  font-size: 13px; color: var(--red); font-weight: 500;
+  display: none; line-height: 1.5;
+}
+
+/* ── COLORS ── */
+.green  { color: var(--green); }
+.red    { color: var(--red);   }
+.blue   { color: var(--blue);  }
+.muted  { color: var(--text2); }
+
+/* ── FX ROW ── */
+.fx-row {
+  background: var(--bg2); border-radius: var(--r);
+  padding: 12px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.fx-label { font-size: 13px; color: var(--text2); font-weight: 500; }
+.fx-value { font-size: 15px; font-weight: 600; }
 </style>
 </head>
 <body>
 
 <div class="loader" id="loader">
-  <div class="spinner"></div>
-  <div class="loader-txt">CHARGEMENT DES COURS…</div>
+  <div class="loader-spinner"></div>
+  <div class="loader-text">Chargement…</div>
 </div>
 
-<header class="hdr">
-  <div>
-    <div class="brand">Portfolio Tracker</div>
-    <div class="total-lbl">VALEUR TOTALE</div>
-    <div class="total-val" id="total-val">— €</div>
-    <div class="total-pnl" id="total-pnl">—</div>
+<!-- TOP BAR -->
+<div class="topbar">
+  <span class="topbar-title">Portfolio</span>
+  <button class="topbar-btn" onclick="manualRefresh()" title="Rafraîchir">↺</button>
+</div>
+
+<div class="scroll">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-label">VALEUR TOTALE</div>
+    <div class="hero-value" id="hero-val">— €</div>
+    <div class="hero-pnl"  id="hero-pnl">—</div>
+    <div class="hero-time" id="hero-time">—</div>
   </div>
-  <div class="hdr-right">
-    <div class="rlbl">Prochain refresh</div>
-    <div class="countdown" id="countdown">60s</div>
-    <div class="last-upd" id="last-upd">—</div>
-    <div class="btn-row">
-      <button class="btn" onclick="manualRefresh()">↺ Rafraîchir</button>
+
+  <!-- ERROR -->
+  <div class="error-banner" id="err"></div>
+
+  <!-- POSITIONS -->
+  <div class="section-label">Positions</div>
+  <div class="list" id="list"></div>
+
+  <!-- STATS -->
+  <div class="section-label">Récapitulatif</div>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Investi</div>
+      <div class="stat-value" id="s-cost">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">+/- latent</div>
+      <div class="stat-value" id="s-pnl">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Performance</div>
+      <div class="stat-value" id="s-pct">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">EUR / USD</div>
+      <div class="stat-value muted" id="s-fx">—</div>
     </div>
   </div>
-</header>
 
-<hr class="div">
-
-<div class="banner">
-  <div class="banner-ico">🎮</div>
-  <div>
-    <div class="banner-lbl">GTA VI — 19 novembre 2026</div>
-    <div class="banner-val" id="gta-val">…</div>
+  <!-- GTA VI -->
+  <div class="section-label">Catalyseur</div>
+  <div class="gta-banner">
+    <div class="gta-left">
+      <div class="gta-icon">🎮</div>
+      <div>
+        <div class="gta-label">GTA VI</div>
+        <div class="gta-sub">19 novembre 2026</div>
+      </div>
+    </div>
+    <div class="gta-countdown" id="gta">…</div>
   </div>
-</div>
 
-<div class="err-box" id="err-box"></div>
+  <!-- REFRESH -->
+  <div class="refresh-row">
+    <span class="refresh-text" id="next-refresh">Prochain refresh dans 60s</span>
+    <button class="refresh-pill" onclick="manualRefresh()">Actualiser</button>
+  </div>
 
-<div class="cards" id="cards"></div>
+  <!-- FX -->
+  <div style="margin-top:10px">
+    <div class="fx-row">
+      <span class="fx-label">Taux de change live</span>
+      <span class="fx-value" id="fx-live">—</span>
+    </div>
+  </div>
 
-<div class="summary">
-  <div class="sum-item"><div class="s-lbl">Prix de revient</div><div class="s-val nt" id="s-cost">—</div></div>
-  <div class="sum-item"><div class="s-lbl">Valeur actuelle</div><div class="s-val nt" id="s-val">—</div></div>
-  <div class="sum-item"><div class="s-lbl">+/- latent €</div><div class="s-val" id="s-pnl">—</div></div>
-  <div class="sum-item"><div class="s-lbl">+/- latent %</div><div class="s-val" id="s-pct">—</div></div>
-  <div class="sum-item"><div class="s-lbl">EUR / USD live</div><div class="s-val nt" id="s-fx">—</div></div>
-</div>
+</div><!-- /scroll -->
 
 <script>
-// ═══════════════════════════════════════════════════════════════
-//  CONFIGURATION — modifie ici si tu changes tes positions
-// ═══════════════════════════════════════════════════════════════
-const API_KEY   = 'd8nou8hr01qvvn99oe20d8nou8hr01qvvn99oe2g';
-const PORTFOLIO = [
-  { ticker:'TTWO', name:'Take-Two Interactive', qty:2.34,  costUSD:207.00 },
-  { ticker:'SONY', name:'Sony Group Corp.',      qty:1.88,  costUSD:20.04  },
-  { ticker:'NVDA', name:'NVIDIA Corporation',    qty:0.17,  costUSD:210.00 },
+// ══════════════════════════════════════════════
+//  CONFIG — modifier ici si les positions changent
+// ══════════════════════════════════════════════
+const API_KEY = 'd8nou8hr01qvvn99oe20d8nou8hr01qvvn99oe2g';
+const HOLDINGS = [
+  { ticker:'TTWO', label:'Take-Two',  sub:'2,34 actions', qty:2.34,  cost:207.00, icon:'T2',  cls:'icon-ttwo' },
+  { ticker:'SONY', label:'Sony',      sub:'1,88 actions', qty:1.88,  cost:20.04,  icon:'SNY', cls:'icon-sony' },
+  { ticker:'NVDA', label:'NVIDIA',    sub:'0,17 actions', qty:0.17,  cost:210.00, icon:'NV',  cls:'icon-nvda' },
 ];
-// ═══════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════
 
-let EURUSD    = 1.09;
-let timerSec  = 60;
+let EURUSD   = 1.09;
+let timerSec = 60;
 
-// ── FETCH FINNHUB ────────────────────────────────────────────────────────────
+const f  = (n, d=2) => (+n).toLocaleString('fr-FR', { minimumFractionDigits:d, maximumFractionDigits:d });
+const sg = n => n >= 0 ? '+' : '';
+const cl = n => n > 0 ? 'green' : n < 0 ? 'red' : 'muted';
+
 async function getQuote(ticker) {
-  const url = `https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${API_KEY}`;
-  const r   = await fetch(url, { signal: AbortSignal.timeout(8000) });
-  if (!r.ok) throw new Error(`Finnhub HTTP ${r.status} pour ${ticker}`);
+  const r = await fetch(
+    `https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${API_KEY}`,
+    { signal: AbortSignal.timeout(8000) }
+  );
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
   const d = await r.json();
-  if (!d.c || d.c === 0) throw new Error(`Pas de données pour ${ticker}`);
-  return {
-    price:     d.c,   // cours actuel
-    prevClose: d.pc,  // clôture précédente
-    high:      d.h,   // plus haut du jour
-    low:       d.l,   // plus bas du jour
-    open:      d.o,   // ouverture
-  };
+  if (!d.c) throw new Error(`Pas de données pour ${ticker}`);
+  return { price: d.c, prev: d.pc, high: d.h, low: d.l };
 }
 
-// ── FETCH EUR/USD (sans clé, gratuit) ───────────────────────────────────────
 async function getEURUSD() {
   try {
-    const r = await fetch('https://open.er-api.com/v6/latest/USD',
-                          { signal: AbortSignal.timeout(5000) });
+    const r = await fetch('https://open.er-api.com/v6/latest/USD', { signal: AbortSignal.timeout(5000) });
     const d = await r.json();
     if (d?.rates?.EUR) EURUSD = 1 / d.rates.EUR;
-  } catch(_) { /* garde valeur précédente */ }
+  } catch(_) {}
 }
 
-// ── HELPERS ──────────────────────────────────────────────────────────────────
-const f   = (n,d=2) => (+n).toLocaleString('fr-FR',{minimumFractionDigits:d,maximumFractionDigits:d});
-const sg  = n => n >= 0 ? '+' : '';
-const cl  = n => n > 0 ? 'up' : n < 0 ? 'dn' : 'fl';
+function buildRow(h, q, totalUSD) {
+  const dayChg = q.price - q.prev;
+  const dayPct = (dayChg / q.prev) * 100;
+  const valEUR = (q.price * h.qty) / EURUSD;
+  const pnlPct = ((q.price - h.cost) / h.cost) * 100;
 
-function buildCard(item, q, totalUSD) {
-  const { ticker, name, qty, costUSD } = item;
-  const dayChg  = q.price - q.prevClose;
-  const dayPct  = (dayChg / q.prevClose) * 100;
-  const valUSD  = q.price * qty;
-  const valEUR  = valUSD / EURUSD;
-  const costTot = costUSD * qty;
-  const pnlUSD  = (q.price - costUSD) * qty;
-  const pnlEUR  = pnlUSD / EURUSD;
-  const pnlPct  = ((q.price - costUSD) / costUSD) * 100;
-  const dayEUR  = dayChg * qty / EURUSD;
-  const weight  = (valUSD / totalUSD) * 100;
-
-  return `<div class="card">
-    <div class="c-top">
-      <div>
-        <div class="c-ticker">${ticker}</div>
-        <div class="c-name">${name}</div>
-      </div>
-      <div class="badge ${cl(dayPct)}">${sg(dayPct)}${f(dayPct)}%</div>
+  return `
+  <div class="list-row">
+    <div class="ticker-icon ${h.cls}">${h.icon}</div>
+    <div class="row-mid">
+      <div class="row-name">${h.label}</div>
+      <div class="row-sub">${h.sub} · ${f(q.price)} $</div>
     </div>
-
-    <div class="c-price-row">
-      <div class="c-price">${f(q.price)}</div>
-      <div class="c-cur">USD</div>
+    <div class="row-right">
+      <div class="row-val">${f(valEUR)} €</div>
+      <div class="row-chg ${cl(dayPct)}">${sg(dayPct)}${f(dayPct)}%</div>
     </div>
-    <div class="c-chg ${cl(dayChg)}">
-      ${sg(dayChg)}${f(dayChg)} $&nbsp;&nbsp;(${sg(dayEUR)}${f(dayEUR)} €) aujourd'hui
-    </div>
-    <div class="hi-lo">
-      <span>H</span> ${f(q.high)} &nbsp; <span>B</span> ${f(q.low)} &nbsp; <span>O</span> ${f(q.open)}
-    </div>
-
-    <hr class="c-sep">
-    <div class="stats">
-      <div>
-        <div class="st-lbl">Quantité</div>
-        <div class="st-val nt">${qty}</div>
-      </div>
-      <div>
-        <div class="st-lbl">Valeur</div>
-        <div class="st-val nt">${f(valEUR)} €</div>
-      </div>
-      <div>
-        <div class="st-lbl">+/- total €</div>
-        <div class="st-val ${cl(pnlEUR)}">${sg(pnlEUR)}${f(pnlEUR)} €</div>
-      </div>
-      <div>
-        <div class="st-lbl">+/- total %</div>
-        <div class="st-val ${cl(pnlPct)}">${sg(pnlPct)}${f(pnlPct)}%</div>
-      </div>
-    </div>
-
-    <div class="wbar-track">
-      <div class="wbar-fill" style="width:${Math.min(weight,100).toFixed(1)}%"></div>
-    </div>
-    <div class="wbar-lbl">${f(weight,1)}% du portefeuille</div>
   </div>`;
 }
 
-// ── REFRESH ──────────────────────────────────────────────────────────────────
 async function refresh() {
-  const cardsEl = document.getElementById('cards');
-  cardsEl.classList.add('refreshing');
-  document.getElementById('err-box').style.display = 'none';
-
+  document.getElementById('err').style.display = 'none';
   try {
     await getEURUSD();
-    const quotes = await Promise.all(PORTFOLIO.map(p => getQuote(p.ticker)));
+    const quotes = await Promise.all(HOLDINGS.map(h => getQuote(h.ticker)));
 
-    const totUSD  = PORTFOLIO.reduce((s,p,i) => s + quotes[i].price * p.qty, 0);
-    const costUSD = PORTFOLIO.reduce((s,p)   => s + p.costUSD * p.qty, 0);
+    const totUSD  = HOLDINGS.reduce((s,h,i) => s + quotes[i].price * h.qty, 0);
+    const costUSD = HOLDINGS.reduce((s,h)   => s + h.cost * h.qty, 0);
     const totEUR  = totUSD  / EURUSD;
     const costEUR = costUSD / EURUSD;
     const pnlEUR  = totEUR - costEUR;
     const pnlPct  = (pnlEUR / costEUR) * 100;
 
-    cardsEl.innerHTML = PORTFOLIO.map((p,i) => buildCard(p, quotes[i], totUSD)).join('');
+    // Liste
+    document.getElementById('list').innerHTML =
+      HOLDINGS.map((h,i) => buildRow(h, quotes[i], totUSD)).join('');
 
-    // Header
-    document.getElementById('total-val').textContent = f(totEUR) + ' €';
-    const pEl = document.getElementById('total-pnl');
-    pEl.textContent = `${sg(pnlEUR)}${f(pnlEUR)} €  (${sg(pnlPct)}${f(pnlPct)}%)`;
-    pEl.style.color = pnlPct >= 0 ? 'var(--green)' : 'var(--red)';
+    // Hero
+    document.getElementById('hero-val').textContent = f(totEUR) + ' €';
+    const pnlEl = document.getElementById('hero-pnl');
+    pnlEl.textContent = `${sg(pnlEUR)}${f(pnlEUR)} €  (${sg(pnlPct)}${f(pnlPct)}%)`;
+    pnlEl.className = 'hero-pnl ' + cl(pnlPct);
+    document.getElementById('hero-time').textContent =
+      'Mis à jour à ' + new Date().toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'});
 
-    // Summary
+    // Stats
     document.getElementById('s-cost').textContent = f(costEUR) + ' €';
-    document.getElementById('s-val').textContent  = f(totEUR)  + ' €';
     const spEl = document.getElementById('s-pnl');
     spEl.textContent = `${sg(pnlEUR)}${f(pnlEUR)} €`;
-    spEl.style.color = pnlPct >= 0 ? 'var(--green)' : 'var(--red)';
+    spEl.className = 'stat-value ' + cl(pnlEUR);
     const sppEl = document.getElementById('s-pct');
     sppEl.textContent = `${sg(pnlPct)}${f(pnlPct)} %`;
-    sppEl.style.color = pnlPct >= 0 ? 'var(--green)' : 'var(--red)';
+    sppEl.className = 'stat-value ' + cl(pnlPct);
     document.getElementById('s-fx').textContent = f(EURUSD, 4);
-
-    document.getElementById('last-upd').textContent =
-      'Mis à jour à ' + new Date().toLocaleTimeString('fr-FR');
+    document.getElementById('fx-live').textContent = `1 € = ${f(EURUSD,4)} $`;
 
     // Masquer loader
     const l = document.getElementById('loader');
     l.style.opacity = '0';
-    setTimeout(() => l.style.display = 'none', 350);
+    setTimeout(() => l.style.display = 'none', 300);
 
   } catch(err) {
-    console.error(err);
-    const eb = document.getElementById('err-box');
+    const eb = document.getElementById('err');
     eb.style.display = 'block';
-    eb.innerHTML = `⚠ Impossible de charger les cours.<br>
-      <small style="opacity:.7">${err.message}</small><br>
-      <small style="opacity:.5">Vérifiez votre connexion ou cliquez ↺ Rafraîchir</small>`;
-    document.getElementById('last-upd').textContent =
-      '⚠ Échec — ' + new Date().toLocaleTimeString('fr-FR');
+    eb.textContent = '⚠ ' + err.message + ' — vérifiez votre connexion.';
     const l = document.getElementById('loader');
     l.style.opacity = '0';
-    setTimeout(() => l.style.display = 'none', 350);
+    setTimeout(() => l.style.display = 'none', 300);
   }
-
-  cardsEl.classList.remove('refreshing');
 }
 
 function manualRefresh() {
   timerSec = 60;
   const l = document.getElementById('loader');
-  l.style.display  = 'flex';
-  l.style.opacity  = '1';
+  l.style.display = 'flex'; l.style.opacity = '1';
   refresh();
 }
 
-// ── TIMER 60s ────────────────────────────────────────────────────────────────
+// Timer
 setInterval(() => {
-  document.getElementById('countdown').textContent = timerSec + 's';
-  if (timerSec <= 0) { timerSec = 60; refresh(); }
   timerSec--;
+  document.getElementById('next-refresh').textContent =
+    timerSec > 0 ? `Prochain refresh dans ${timerSec}s` : 'Mise à jour…';
+  if (timerSec <= 0) { timerSec = 60; refresh(); }
 }, 1000);
 
-// ── GTA VI ───────────────────────────────────────────────────────────────────
+// GTA VI
 function tickGTA() {
   const diff = new Date('2026-11-19T00:00:00') - new Date();
-  if (diff <= 0) { document.getElementById('gta-val').textContent = '🎉 Sorti !'; return; }
+  if (diff <= 0) { document.getElementById('gta').textContent = '🎉 Sorti !'; return; }
   const d = Math.floor(diff / 86400000);
   const h = Math.floor((diff % 86400000) / 3600000);
-  const m = Math.floor((diff % 3600000)  / 60000);
-  document.getElementById('gta-val').textContent = `J-${d} · ${h}h ${m}min`;
+  const m = Math.floor((diff % 3600000) / 60000);
+  document.getElementById('gta').textContent = `J-${d} · ${h}h${m}m`;
 }
 tickGTA();
 setInterval(tickGTA, 30000);
 
-// ── INIT ─────────────────────────────────────────────────────────────────────
 refresh();
 </script>
 </body>
