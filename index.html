@@ -657,7 +657,7 @@ function cycleTolerance() {
 }
 
 // ── CAPTURE PHOTO ────────────────────────────────────────────────
-function takePhoto() {
+async function takePhoto() {
   const video = document.getElementById('video');
   if (!video.srcObject) return;
 
@@ -668,19 +668,41 @@ function takePhoto() {
   const canvas = document.createElement('canvas');
   canvas.width  = w;
   canvas.height = h;
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(video, 0, 0, w, h);
+  const c = canvas.getContext('2d');
+  c.drawImage(video, 0, 0, w, h);
 
-  // Qualité maximale JPEG
-  const dataUrl = canvas.toDataURL('image/jpeg', 1.0);
-
+  // Qualité maximale JPEG → Blob
+  const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 1.0));
+  const dataUrl = URL.createObjectURL(blob);
   const ts = new Date();
-  photos.push({ dataUrl, roll: roll.toFixed(2), pitch: pitch.toFixed(2), ts, w, h });
+  const fileName = `piece_${ts.toISOString().replace(/[:.]/g,'-')}.jpg`;
+
+  photos.push({ dataUrl, blob, fileName, roll: roll.toFixed(2), pitch: pitch.toFixed(2), ts, w, h });
 
   flashEffect();
   addThumb(photos.length - 1);
-  showToast(`Photo ${photos.length} capturée — ${w}×${h}`);
   vibrate();
+
+  // ── SHARE SHEET iOS (enregistrement direct dans la galerie) ──
+  if (navigator.share && navigator.canShare) {
+    const file = new File([blob], fileName, { type: 'image/jpeg' });
+    if (navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({
+          files: [file],
+          title: 'Photo pièce mécanique',
+        });
+        showToast('✓ Image envoyée vers la galerie');
+        return;
+      } catch(e) {
+        // Utilisateur a annulé le share → on garde juste en local
+        if (e.name !== 'AbortError') console.warn('Share error', e);
+      }
+    }
+  }
+
+  // Fallback : téléchargement direct (desktop / navigateur non compatible)
+  showToast(`Photo ${photos.length} — ${w}×${h} · Tap miniature pour sauvegarder`);
 }
 
 function flashEffect() {
@@ -721,12 +743,21 @@ function closeViewer() {
   document.getElementById('viewer').classList.remove('open');
   viewerIdx = -1;
 }
-function downloadCurrent() {
+async function downloadCurrent() {
   if (viewerIdx < 0) return;
   const p = photos[viewerIdx];
+  if (navigator.share && navigator.canShare && p.blob) {
+    const file = new File([p.blob], p.fileName, { type: 'image/jpeg' });
+    if (navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: 'Photo pièce mécanique' });
+        return;
+      } catch(e) { if (e.name === 'AbortError') return; }
+    }
+  }
   const a = document.createElement('a');
   a.href = p.dataUrl;
-  a.download = `piece_${p.ts.toISOString().replace(/[:.]/g,'-')}.jpg`;
+  a.download = p.fileName || `piece.jpg`;
   a.click();
 }
 function deleteCurrent() {
