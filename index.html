@@ -2,400 +2,758 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Portfolio</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>NiveauCam</title>
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
 
-:root {
-  --bg:         #000000;
-  --bg2:        #1c1c1e;
-  --bg3:        #2c2c2e;
-  --sep:        rgba(255,255,255,.1);
-  --text:       #ffffff;
-  --text2:      rgba(255,255,255,.55);
-  --text3:      rgba(255,255,255,.3);
-  --green:      #30d158;
-  --red:        #ff453a;
-  --blue:       #0a84ff;
-  --r:          14px;
-}
+  html, body {
+    width: 100%; height: 100%;
+    background: #000;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+    touch-action: none;
+  }
 
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  padding: env(safe-area-inset-top, 0) 0 env(safe-area-inset-bottom, 40px);
-  min-height: 100svh;
-}
+  /* ── VIDEO PLEIN ÉCRAN ── */
+  #video {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    z-index: 0;
+  }
 
-/* ── SCROLL WRAPPER ── */
-.scroll { padding: 0 16px 32px; max-width: 430px; margin: 0 auto; }
+  /* ── OVERLAY GLOBAL ── */
+  #overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 10;
+    pointer-events: none;
+  }
 
-/* ── STATUS BAR SPACER ── */
-.topbar { height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; }
-.topbar-title { font-size: 17px; font-weight: 600; letter-spacing: -.3px; }
-.topbar-btn {
-  width: 32px; height: 32px; border-radius: 50%;
-  background: var(--bg2); border: none; color: var(--text2);
-  font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center;
-  transition: background .15s;
-}
-.topbar-btn:active { background: var(--bg3); }
+  /* ── GRILLE DE COMPOSITION (tiers) ── */
+  .grid-line {
+    position: absolute;
+    background: rgba(255,255,255,0.12);
+  }
+  .grid-v { width: 1px; top: 0; bottom: 0; }
+  .grid-h { height: 1px; left: 0; right: 0; }
+  #gl1 { left: 33.33%; }
+  #gl2 { left: 66.66%; }
+  #gl3 { top: 33.33%; }
+  #gl4 { top: 66.66%; }
 
-/* ── HERO ── */
-.hero { text-align: center; padding: 8px 0 32px; }
-.hero-label { font-size: 13px; font-weight: 500; color: var(--text2); letter-spacing: .3px; margin-bottom: 6px; }
-.hero-value { font-size: 52px; font-weight: 700; letter-spacing: -2px; line-height: 1; }
-.hero-pnl   { font-size: 17px; font-weight: 500; margin-top: 6px; }
-.hero-time  { font-size: 12px; color: var(--text3); margin-top: 4px; }
+  /* ── CROSSHAIR CENTRAL ── */
+  #crosshair {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px; height: 40px;
+    pointer-events: none;
+  }
+  #crosshair::before, #crosshair::after {
+    content: '';
+    position: absolute;
+    background: rgba(255,255,255,0.7);
+  }
+  #crosshair::before { width: 1px; height: 100%; left: 50%; top: 0; transform: translateX(-50%); }
+  #crosshair::after  { height: 1px; width: 100%; top: 50%; left: 0; transform: translateY(-50%); }
 
-/* ── SECTION LABEL ── */
-.section-label {
-  font-size: 13px; font-weight: 600; color: var(--text2);
-  letter-spacing: .5px; text-transform: uppercase;
-  margin: 24px 0 8px;
-}
+  /* ── NIVEAU HORIZONTAL (barre du bas) ── */
+  #level-h-wrap {
+    position: absolute;
+    bottom: 220px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    pointer-events: none;
+  }
+  #level-h-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.45);
+    text-transform: uppercase;
+  }
+  #level-h-bar {
+    width: 220px;
+    height: 4px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 2px;
+    position: relative;
+    overflow: visible;
+  }
+  #level-h-center {
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    width: 2px; height: 10px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 1px;
+  }
+  #level-h-bubble {
+    position: absolute;
+    top: 50%;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: left 0.08s linear, background 0.25s;
+    border: 2px solid rgba(255,255,255,0.9);
+    background: rgba(255,60,60,0.85);
+    box-shadow: 0 0 8px rgba(255,60,60,0.6);
+  }
+  #level-h-bubble.ok {
+    background: rgba(50,220,100,0.9);
+    box-shadow: 0 0 10px rgba(50,220,100,0.7);
+  }
+  #roll-val {
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 1px;
+  }
 
-/* ── LIST CARD ── */
-.list {
-  background: var(--bg2);
-  border-radius: var(--r);
-  overflow: hidden;
-}
-.list-row {
-  display: flex; align-items: center;
-  padding: 14px 16px; gap: 12px;
-  position: relative;
-}
-.list-row + .list-row::before {
-  content: '';
-  position: absolute; top: 0; left: 60px; right: 0;
-  height: 1px; background: var(--sep);
-}
+  /* ── NIVEAU VERTICAL (barre latérale droite) ── */
+  #level-v-wrap {
+    position: absolute;
+    right: 32px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    pointer-events: none;
+  }
+  #pitch-val {
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 1px;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+  }
+  #level-v-bar {
+    width: 4px;
+    height: 180px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 2px;
+    position: relative;
+    overflow: visible;
+  }
+  #level-v-center {
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    height: 2px; width: 10px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 1px;
+  }
+  #level-v-bubble {
+    position: absolute;
+    left: 50%;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: top 0.08s linear, background 0.25s;
+    border: 2px solid rgba(255,255,255,0.9);
+    background: rgba(255,60,60,0.85);
+    box-shadow: 0 0 8px rgba(255,60,60,0.6);
+  }
+  #level-v-bubble.ok {
+    background: rgba(50,220,100,0.9);
+    box-shadow: 0 0 10px rgba(50,220,100,0.7);
+  }
 
-/* icone ticker */
-.ticker-icon {
-  width: 40px; height: 40px; border-radius: 10px;
-  background: var(--bg3);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 15px; font-weight: 700; color: var(--text); flex-shrink: 0;
-  letter-spacing: -.5px;
-}
-.icon-ttwo { background: #1a1aff; }
-.icon-sony { background: #1a1a1a; border: 1px solid rgba(255,255,255,.12); }
-.icon-nvda { background: #76b900; }
+  /* ── BADGE PLAN ── */
+  #plan-badge {
+    position: absolute;
+    top: 58px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 5px 16px;
+    border-radius: 20px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 600;
+    border: 1px solid;
+    pointer-events: none;
+    transition: all 0.3s;
+    white-space: nowrap;
+    backdrop-filter: blur(6px);
+  }
+  #plan-badge.nok {
+    color: rgba(255,100,80,0.95);
+    border-color: rgba(255,100,80,0.5);
+    background: rgba(255,60,60,0.1);
+  }
+  #plan-badge.ok {
+    color: rgba(50,220,100,0.95);
+    border-color: rgba(50,220,100,0.5);
+    background: rgba(50,220,100,0.1);
+  }
 
-.row-mid { flex: 1; min-width: 0; }
-.row-name  { font-size: 15px; font-weight: 600; letter-spacing: -.2px; }
-.row-sub   { font-size: 13px; color: var(--text2); margin-top: 1px; }
+  /* ── BOUTON DÉCLENCHEUR ── */
+  #controls {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 20;
+    padding-bottom: calc(30px + env(safe-area-inset-bottom));
+    padding-top: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    pointer-events: all;
+  }
 
-.row-right { text-align: right; flex-shrink: 0; }
-.row-val   { font-size: 15px; font-weight: 600; letter-spacing: -.2px; }
-.row-chg   { font-size: 13px; margin-top: 1px; font-weight: 500; }
+  /* Infos qualité */
+  #quality-info {
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 1px;
+    text-align: center;
+  }
 
-/* ── STATS GRID ── */
-.stats-grid {
-  display: grid; grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-.stat-card {
-  background: var(--bg2); border-radius: var(--r);
-  padding: 14px 16px;
-}
-.stat-label { font-size: 12px; color: var(--text2); font-weight: 500; margin-bottom: 4px; }
-.stat-value { font-size: 20px; font-weight: 700; letter-spacing: -.5px; }
+  /* Shutter */
+  #shutter-ring {
+    width: 78px; height: 78px;
+    border-radius: 50%;
+    border: 3px solid rgba(255,255,255,0.8);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0;
+  }
+  #shutter-btn {
+    width: 62px; height: 62px;
+    border-radius: 50%;
+    background: #fff;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.08s, background 0.15s;
+    position: relative;
+    flex-shrink: 0;
+  }
+  #shutter-btn:active { transform: scale(0.90); background: #ddd; }
 
-/* ── GTA BANNER ── */
-.gta-banner {
-  background: var(--bg2); border-radius: var(--r);
-  padding: 14px 16px;
-  display: flex; align-items: center; justify-content: space-between;
-}
-.gta-left { display: flex; align-items: center; gap: 12px; }
-.gta-icon {
-  width: 40px; height: 40px; border-radius: 10px;
-  background: linear-gradient(135deg, #ff6b35, #ff2d55);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 20px; flex-shrink: 0;
-}
-.gta-label { font-size: 13px; font-weight: 600; }
-.gta-sub   { font-size: 12px; color: var(--text2); margin-top: 1px; }
-.gta-countdown { font-size: 15px; font-weight: 700; color: var(--blue); white-space: nowrap; }
+  /* Flash overlay */
+  #flash {
+    position: fixed;
+    top:0;left:0;right:0;bottom:0;
+    background: #fff;
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.06s;
+  }
+  #flash.fire { opacity: 1; }
 
-/* ── REFRESH ROW ── */
-.refresh-row {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 0 0;
-}
-.refresh-text { font-size: 12px; color: var(--text3); }
-.refresh-pill {
-  background: var(--bg2); border: none; color: var(--blue);
-  font-family: inherit; font-size: 13px; font-weight: 600;
-  padding: 6px 14px; border-radius: 20px; cursor: pointer;
-  transition: opacity .15s;
-}
-.refresh-pill:active { opacity: .6; }
+  /* ── PERMISSION SCREEN ── */
+  #perm-screen {
+    position: fixed;
+    inset: 0;
+    background: #0a0a0a;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 40px;
+    text-align: center;
+  }
+  #perm-screen .icon { font-size: 52px; }
+  #perm-screen h1 { color: #fff; font-size: 22px; font-weight: 700; }
+  #perm-screen p  { color: rgba(255,255,255,0.5); font-size: 14px; line-height: 1.6; }
+  #perm-btn {
+    padding: 14px 32px;
+    border-radius: 14px;
+    border: none;
+    background: #fff;
+    color: #000;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 8px;
+    font-family: -apple-system, sans-serif;
+  }
 
-/* ── LOADER ── */
-.loader {
-  position: fixed; inset: 0; background: #000;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 16px; z-index: 99; transition: opacity .3s;
-}
-.loader-spinner {
-  width: 28px; height: 28px;
-  border: 2.5px solid rgba(255,255,255,.15);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spin .7s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-.loader-text { font-size: 13px; color: rgba(255,255,255,.4); font-weight: 500; }
+  /* ── GALERIE MINIATURE ── */
+  #thumb-strip {
+    position: fixed;
+    bottom: calc(160px + env(safe-area-inset-bottom));
+    left: 16px;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    pointer-events: all;
+  }
+  .thumb {
+    width: 52px; height: 52px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 2px solid rgba(255,255,255,0.7);
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+  }
+  #photo-count {
+    font-size: 10px;
+    color: rgba(255,255,255,0.5);
+    text-align: center;
+    letter-spacing: 1px;
+  }
 
-/* ── ERROR ── */
-.error-banner {
-  background: rgba(255,69,58,.12);
-  border-radius: var(--r); padding: 12px 16px;
-  font-size: 13px; color: var(--red); font-weight: 500;
-  display: none; line-height: 1.5;
-}
+  /* ── VISIONNEUSE ── */
+  #viewer {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.95);
+    z-index: 300;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    gap: 16px;
+  }
+  #viewer.open { display: flex; }
+  #viewer img { max-width: 100%; max-height: 70vh; border-radius: 10px; object-fit: contain; }
+  .viewer-meta {
+    font-size: 12px;
+    color: rgba(255,255,255,0.5);
+    text-align: center;
+    letter-spacing: 1px;
+    line-height: 1.8;
+  }
+  .viewer-btns { display: flex; gap: 12px; }
+  .vbtn {
+    padding: 12px 24px;
+    border-radius: 12px;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: -apple-system, sans-serif;
+  }
+  #vbtn-download { background: #fff; color: #000; }
+  #vbtn-delete   { background: rgba(255,60,60,0.2); color: #ff4040; border: 1px solid rgba(255,60,60,0.4); }
+  #vbtn-close    { background: rgba(255,255,255,0.1); color: #fff; }
 
-/* ── COLORS ── */
-.green  { color: var(--green); }
-.red    { color: var(--red);   }
-.blue   { color: var(--blue);  }
-.muted  { color: var(--text2); }
+  /* ── TOP BAR ── */
+  #topbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 20;
+    padding-top: calc(12px + env(safe-area-inset-top));
+    padding-bottom: 10px;
+    padding-left: 20px;
+    padding-right: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    pointer-events: none;
+  }
+  #app-name {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,0.6);
+    text-transform: uppercase;
+  }
+  #tolerance-display {
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 1px;
+    pointer-events: all;
+    cursor: pointer;
+    padding: 4px 10px;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 10px;
+    backdrop-filter: blur(4px);
+  }
 
-/* ── FX ROW ── */
-.fx-row {
-  background: var(--bg2); border-radius: var(--r);
-  padding: 12px 16px;
-  display: flex; align-items: center; justify-content: space-between;
-}
-.fx-label { font-size: 13px; color: var(--text2); font-weight: 500; }
-.fx-value { font-size: 15px; font-weight: 600; }
+  /* ── TOAST ── */
+  #toast {
+    position: fixed;
+    bottom: calc(170px + env(safe-area-inset-bottom));
+    left: 50%; transform: translateX(-50%);
+    background: rgba(50,220,100,0.9);
+    color: #000;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 1px;
+    padding: 9px 20px;
+    border-radius: 20px;
+    z-index: 50;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  #toast.show { opacity: 1; }
+
+  /* Lock icon quand parfaitement plan */
+  #lock-icon {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 22px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  #lock-icon.show { opacity: 1; }
 </style>
 </head>
 <body>
 
-<div class="loader" id="loader">
-  <div class="loader-spinner"></div>
-  <div class="loader-text">Chargement…</div>
+<!-- PERMISSION -->
+<div id="perm-screen">
+  <div class="icon">📷</div>
+  <h1>NiveauCam</h1>
+  <p>Photographie de pièces mécaniques à plat.<br>Niveaux horizontal & vertical en temps réel.<br>Qualité maximale — iPhone 16 Pro Max.</p>
+  <button id="perm-btn" onclick="initCamera()">Autoriser la caméra</button>
 </div>
 
-<!-- TOP BAR -->
-<div class="topbar">
-  <span class="topbar-title">Portfolio</span>
-  <button class="topbar-btn" onclick="manualRefresh()" title="Rafraîchir">↺</button>
+<!-- VIDEO -->
+<video id="video" autoplay playsinline muted></video>
+
+<!-- FLASH -->
+<div id="flash"></div>
+
+<!-- OVERLAY (grille + niveaux) -->
+<div id="overlay">
+  <!-- Grille des tiers -->
+  <div class="grid-line grid-v" id="gl1"></div>
+  <div class="grid-line grid-v" id="gl2"></div>
+  <div class="grid-line grid-h" id="gl3"></div>
+  <div class="grid-line grid-h" id="gl4"></div>
+
+  <!-- Crosshair -->
+  <div id="crosshair"></div>
+
+  <!-- Niveau horizontal -->
+  <div id="level-h-wrap">
+    <div id="level-h-label">Roulis (horizontal)</div>
+    <div id="level-h-bar">
+      <div id="level-h-center"></div>
+      <div id="level-h-bubble" style="left:50%"></div>
+    </div>
+    <div id="roll-val">0.0°</div>
+  </div>
+
+  <!-- Niveau vertical -->
+  <div id="level-v-wrap">
+    <div id="pitch-val">0.0°</div>
+    <div id="level-v-bar">
+      <div id="level-v-center"></div>
+      <div id="level-v-bubble" style="top:50%"></div>
+    </div>
+  </div>
+
+  <!-- Badge PLAN -->
+  <div id="plan-badge" class="nok">Ajustez le téléphone</div>
+
+  <!-- Lock -->
+  <div id="lock-icon">🔒</div>
 </div>
 
-<div class="scroll">
+<!-- TOPBAR -->
+<div id="topbar">
+  <div id="app-name">NiveauCam</div>
+  <div id="tolerance-display" onclick="cycleTolerance()">±<span id="tol-val">1.5</span>°</div>
+</div>
 
-  <!-- HERO -->
-  <div class="hero">
-    <div class="hero-label">VALEUR TOTALE</div>
-    <div class="hero-value" id="hero-val">— €</div>
-    <div class="hero-pnl"  id="hero-pnl">—</div>
-    <div class="hero-time" id="hero-time">—</div>
+<!-- MINIATURES -->
+<div id="thumb-strip">
+  <div id="photo-count"></div>
+</div>
+
+<!-- CONTRÔLES -->
+<div id="controls">
+  <div id="quality-info" id="quality-info">— caméra en cours —</div>
+  <div id="shutter-ring">
+    <button id="shutter-btn" onclick="takePhoto()" title="Capturer"></button>
   </div>
+</div>
 
-  <!-- ERROR -->
-  <div class="error-banner" id="err"></div>
-
-  <!-- POSITIONS -->
-  <div class="section-label">Positions</div>
-  <div class="list" id="list"></div>
-
-  <!-- STATS -->
-  <div class="section-label">Récapitulatif</div>
-  <div class="stats-grid">
-    <div class="stat-card">
-      <div class="stat-label">Investi</div>
-      <div class="stat-value" id="s-cost">—</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">+/- latent</div>
-      <div class="stat-value" id="s-pnl">—</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Performance</div>
-      <div class="stat-value" id="s-pct">—</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">EUR / USD</div>
-      <div class="stat-value muted" id="s-fx">—</div>
-    </div>
+<!-- VISIONNEUSE -->
+<div id="viewer">
+  <img id="viewer-img" src="" alt="">
+  <div class="viewer-meta" id="viewer-meta"></div>
+  <div class="viewer-btns">
+    <button class="vbtn" id="vbtn-download" onclick="downloadCurrent()">⬇ Télécharger</button>
+    <button class="vbtn" id="vbtn-delete" onclick="deleteCurrent()">✕ Supprimer</button>
+    <button class="vbtn" id="vbtn-close" onclick="closeViewer()">Fermer</button>
   </div>
+</div>
 
-  <!-- GTA VI -->
-  <div class="section-label">Catalyseur</div>
-  <div class="gta-banner">
-    <div class="gta-left">
-      <div class="gta-icon">🎮</div>
-      <div>
-        <div class="gta-label">GTA VI</div>
-        <div class="gta-sub">19 novembre 2026</div>
-      </div>
-    </div>
-    <div class="gta-countdown" id="gta">…</div>
-  </div>
-
-  <!-- REFRESH -->
-  <div class="refresh-row">
-    <span class="refresh-text" id="next-refresh">Prochain refresh dans 60s</span>
-    <button class="refresh-pill" onclick="manualRefresh()">Actualiser</button>
-  </div>
-
-  <!-- FX -->
-  <div style="margin-top:10px">
-    <div class="fx-row">
-      <span class="fx-label">Taux de change live</span>
-      <span class="fx-value" id="fx-live">—</span>
-    </div>
-  </div>
-
-</div><!-- /scroll -->
+<!-- TOAST -->
+<div id="toast"></div>
 
 <script>
-// ══════════════════════════════════════════════
-//  CONFIG — modifier ici si les positions changent
-// ══════════════════════════════════════════════
-const API_KEY = 'd8nou8hr01qvvn99oe20d8nou8hr01qvvn99oe2g';
-const HOLDINGS = [
-  { ticker:'TTWO', label:'Take-Two',  sub:'2,34 actions', qty:2.34,  cost:207.00, icon:'T2',  cls:'icon-ttwo' },
-  { ticker:'SONY', label:'Sony',      sub:'1,88 actions', qty:1.88,  cost:20.04,  icon:'SNY', cls:'icon-sony' },
-  { ticker:'NVDA', label:'NVIDIA',    sub:'0,17 actions', qty:0.17,  cost:210.00, icon:'NV',  cls:'icon-nvda' },
-];
-// ══════════════════════════════════════════════
+// ── CONFIG ──────────────────────────────────────────────────────
+const TOLERANCES = [0.5, 1.0, 1.5, 2.5];
+let tolIdx = 2; // défaut 1.5°
+let currentTol = () => TOLERANCES[tolIdx];
 
-let EURUSD   = 1.09;
-let timerSec = 60;
+// ── STATE ───────────────────────────────────────────────────────
+let roll  = 0;  // rotation gauche/droite (axe Z)  → niveau H
+let pitch = 0;  // inclinaison avant/arrière (axe X) → niveau V
+let stream = null;
+let photos = []; // [{dataUrl, roll, pitch, ts, w, h}]
+let viewerIdx = -1;
+let sensorAvail = false;
+let gyroGranted = false;
 
-const f  = (n, d=2) => (+n).toLocaleString('fr-FR', { minimumFractionDigits:d, maximumFractionDigits:d });
-const sg = n => n >= 0 ? '+' : '';
-const cl = n => n > 0 ? 'green' : n < 0 ? 'red' : 'muted';
+// ── CAMERA INIT ─────────────────────────────────────────────────
+async function initCamera() {
+  document.getElementById('perm-screen').style.display = 'none';
 
-async function getQuote(ticker) {
-  const r = await fetch(
-    `https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${API_KEY}`,
-    { signal: AbortSignal.timeout(8000) }
-  );
-  if (!r.ok) throw new Error(`HTTP ${r.status}`);
-  const d = await r.json();
-  if (!d.c) throw new Error(`Pas de données pour ${ticker}`);
-  return { price: d.c, prev: d.pc, high: d.h, low: d.l };
-}
+  // Contraintes maximales pour iPhone 16 Pro Max
+  const constraints = {
+    video: {
+      facingMode: { ideal: 'environment' },
+      width:       { ideal: 4032 },
+      height:      { ideal: 3024 },
+      frameRate:   { ideal: 60 },
+      // Qualité maximale
+      advanced: [
+        { width: 4032, height: 3024 },
+        { width: 3840, height: 2160 },
+        { width: 1920, height: 1080 },
+      ]
+    }
+  };
 
-async function getEURUSD() {
   try {
-    const r = await fetch('https://open.er-api.com/v6/latest/USD', { signal: AbortSignal.timeout(5000) });
-    const d = await r.json();
-    if (d?.rates?.EUR) EURUSD = 1 / d.rates.EUR;
-  } catch(_) {}
-}
+    stream = await navigator.mediaDevices.getUserMedia(constraints);
+    const video = document.getElementById('video');
+    video.srcObject = stream;
+    await video.play();
 
-function buildRow(h, q, totalUSD) {
-  const dayChg = q.price - q.prev;
-  const dayPct = (dayChg / q.prev) * 100;
-  const valEUR = (q.price * h.qty) / EURUSD;
-  const pnlPct = ((q.price - h.cost) / h.cost) * 100;
+    // Afficher la résolution obtenue
+    const track = stream.getVideoTracks()[0];
+    const settings = track.getSettings();
+    document.getElementById('quality-info').textContent =
+      `${settings.width || '?'} × ${settings.height || '?'} px`;
 
-  return `
-  <div class="list-row">
-    <div class="ticker-icon ${h.cls}">${h.icon}</div>
-    <div class="row-mid">
-      <div class="row-name">${h.label}</div>
-      <div class="row-sub">${h.sub} · ${f(q.price)} $</div>
-    </div>
-    <div class="row-right">
-      <div class="row-val">${f(valEUR)} €</div>
-      <div class="row-chg ${cl(dayPct)}">${sg(dayPct)}${f(dayPct)}%</div>
-    </div>
-  </div>`;
-}
-
-async function refresh() {
-  document.getElementById('err').style.display = 'none';
-  try {
-    await getEURUSD();
-    const quotes = await Promise.all(HOLDINGS.map(h => getQuote(h.ticker)));
-
-    const totUSD  = HOLDINGS.reduce((s,h,i) => s + quotes[i].price * h.qty, 0);
-    const costUSD = HOLDINGS.reduce((s,h)   => s + h.cost * h.qty, 0);
-    const totEUR  = totUSD  / EURUSD;
-    const costEUR = costUSD / EURUSD;
-    const pnlEUR  = totEUR - costEUR;
-    const pnlPct  = (pnlEUR / costEUR) * 100;
-
-    // Liste
-    document.getElementById('list').innerHTML =
-      HOLDINGS.map((h,i) => buildRow(h, quotes[i], totUSD)).join('');
-
-    // Hero
-    document.getElementById('hero-val').textContent = f(totEUR) + ' €';
-    const pnlEl = document.getElementById('hero-pnl');
-    pnlEl.textContent = `${sg(pnlEUR)}${f(pnlEUR)} €  (${sg(pnlPct)}${f(pnlPct)}%)`;
-    pnlEl.className = 'hero-pnl ' + cl(pnlPct);
-    document.getElementById('hero-time').textContent =
-      'Mis à jour à ' + new Date().toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'});
-
-    // Stats
-    document.getElementById('s-cost').textContent = f(costEUR) + ' €';
-    const spEl = document.getElementById('s-pnl');
-    spEl.textContent = `${sg(pnlEUR)}${f(pnlEUR)} €`;
-    spEl.className = 'stat-value ' + cl(pnlEUR);
-    const sppEl = document.getElementById('s-pct');
-    sppEl.textContent = `${sg(pnlPct)}${f(pnlPct)} %`;
-    sppEl.className = 'stat-value ' + cl(pnlPct);
-    document.getElementById('s-fx').textContent = f(EURUSD, 4);
-    document.getElementById('fx-live').textContent = `1 € = ${f(EURUSD,4)} $`;
-
-    // Masquer loader
-    const l = document.getElementById('loader');
-    l.style.opacity = '0';
-    setTimeout(() => l.style.display = 'none', 300);
-
-  } catch(err) {
-    const eb = document.getElementById('err');
-    eb.style.display = 'block';
-    eb.textContent = '⚠ ' + err.message + ' — vérifiez votre connexion.';
-    const l = document.getElementById('loader');
-    l.style.opacity = '0';
-    setTimeout(() => l.style.display = 'none', 300);
+    initGyro();
+  } catch(e) {
+    alert('Erreur caméra : ' + e.message + '\n\nOuvre cette app dans Safari sur iOS.');
   }
 }
 
-function manualRefresh() {
-  timerSec = 60;
-  const l = document.getElementById('loader');
-  l.style.display = 'flex'; l.style.opacity = '1';
-  refresh();
+// ── GYROSCOPE ───────────────────────────────────────────────────
+function initGyro() {
+  // iOS 13+ nécessite une permission explicite pour DeviceMotion
+  if (typeof DeviceOrientationEvent !== 'undefined' &&
+      typeof DeviceOrientationEvent.requestPermission === 'function') {
+    // Demander la permission gyro via le bouton shutter (geste utilisateur)
+    document.getElementById('shutter-btn').addEventListener('click', requestGyroOnce, { once: true });
+    listenOrientation(); // on essaie quand même (peut fonctionner avant le clic)
+  } else {
+    listenOrientation();
+  }
 }
 
-// Timer
-setInterval(() => {
-  timerSec--;
-  document.getElementById('next-refresh').textContent =
-    timerSec > 0 ? `Prochain refresh dans ${timerSec}s` : 'Mise à jour…';
-  if (timerSec <= 0) { timerSec = 60; refresh(); }
-}, 1000);
-
-// GTA VI
-function tickGTA() {
-  const diff = new Date('2026-11-19T00:00:00') - new Date();
-  if (diff <= 0) { document.getElementById('gta').textContent = '🎉 Sorti !'; return; }
-  const d = Math.floor(diff / 86400000);
-  const h = Math.floor((diff % 86400000) / 3600000);
-  const m = Math.floor((diff % 3600000) / 60000);
-  document.getElementById('gta').textContent = `J-${d} · ${h}h${m}m`;
+async function requestGyroOnce() {
+  if (gyroGranted) return;
+  try {
+    const r = await DeviceOrientationEvent.requestPermission();
+    if (r === 'granted') { gyroGranted = true; listenOrientation(); }
+  } catch(e) { /* silencieux */ }
 }
-tickGTA();
-setInterval(tickGTA, 30000);
 
-refresh();
+function listenOrientation() {
+  window.addEventListener('deviceorientation', e => {
+    sensorAvail = true;
+    // gamma = roulis gauche/droite (-90..+90)
+    // beta  = inclinaison avant/arrière (-180..+180)
+    roll  = e.gamma ?? 0;   // axe horizontal
+    pitch = e.beta  ?? 0;   // axe vertical
+    // Quand le téléphone est à plat (photo du dessus), beta ≈ 0
+    // On recentre : on veut beta proche de 0 (plan horizontal)
+    updateLevels();
+  }, true);
+}
+
+// ── NIVEAUX ─────────────────────────────────────────────────────
+const TOL_RANGE = 45; // degrés max représentés sur la barre
+
+function updateLevels() {
+  const tol = currentTol();
+
+  // Horizontal (roll = gamma)
+  const rClamped = Math.max(-TOL_RANGE, Math.min(TOL_RANGE, roll));
+  const hPct = 50 + (rClamped / TOL_RANGE) * 50; // 0..100%
+  const hBubble = document.getElementById('level-h-bubble');
+  hBubble.style.left = hPct + '%';
+  const rollOk = Math.abs(roll) <= tol;
+  hBubble.classList.toggle('ok', rollOk);
+  document.getElementById('roll-val').textContent = (roll >= 0 ? '+' : '') + roll.toFixed(1) + '°';
+
+  // Vertical (pitch = beta) — on veut beta ≈ 0 pour plan horizontal
+  // Quand à plat, beta varie -90 à +90 selon orientation debout vs couché
+  // On normalise autour de 0 (téléphone à plat face vers le ciel)
+  const pNorm = pitch; // 0° = parfaitement à plat
+  const pClamped = Math.max(-TOL_RANGE, Math.min(TOL_RANGE, pNorm));
+  const vPct = 50 + (pClamped / TOL_RANGE) * 50;
+  const vBubble = document.getElementById('level-v-bubble');
+  vBubble.style.top = vPct + '%';
+  const pitchOk = Math.abs(pNorm) <= tol;
+  vBubble.classList.toggle('ok', pitchOk);
+  document.getElementById('pitch-val').textContent = (pNorm >= 0 ? '+' : '') + pNorm.toFixed(1) + '°';
+
+  // Badge global
+  const badge = document.getElementById('plan-badge');
+  const lock  = document.getElementById('lock-icon');
+  const allOk = rollOk && pitchOk;
+  if (allOk) {
+    badge.className = 'ok';
+    badge.textContent = '✓ PARFAITEMENT PLAN';
+    lock.classList.add('show');
+  } else {
+    badge.className = 'nok';
+    const parts = [];
+    if (!rollOk)  parts.push(`roulis ${roll.toFixed(1)}°`);
+    if (!pitchOk) parts.push(`incl. ${pNorm.toFixed(1)}°`);
+    badge.textContent = parts.join('  ·  ');
+    lock.classList.remove('show');
+  }
+
+  if (!sensorAvail) {
+    badge.className = 'nok';
+    badge.textContent = 'Capteur non disponible';
+  }
+}
+
+// Simulation si pas de gyro (desktop) — pour test
+if (typeof DeviceOrientationEvent === 'undefined') {
+  let t = 0;
+  setInterval(() => {
+    t += 0.02;
+    roll  = Math.sin(t) * 8;
+    pitch = Math.cos(t * 0.7) * 5;
+    sensorAvail = true;
+    updateLevels();
+  }, 50);
+}
+
+// ── TOLÉRANCE ───────────────────────────────────────────────────
+function cycleTolerance() {
+  tolIdx = (tolIdx + 1) % TOLERANCES.length;
+  document.getElementById('tol-val').textContent = TOLERANCES[tolIdx].toFixed(1);
+  showToast(`Tolérance ±${TOLERANCES[tolIdx].toFixed(1)}°`);
+}
+
+// ── CAPTURE PHOTO ────────────────────────────────────────────────
+function takePhoto() {
+  const video = document.getElementById('video');
+  if (!video.srcObject) return;
+
+  // Résolution native de la vidéo
+  const w = video.videoWidth  || 4032;
+  const h = video.videoHeight || 3024;
+
+  const canvas = document.createElement('canvas');
+  canvas.width  = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, w, h);
+
+  // Qualité maximale JPEG
+  const dataUrl = canvas.toDataURL('image/jpeg', 1.0);
+
+  const ts = new Date();
+  photos.push({ dataUrl, roll: roll.toFixed(2), pitch: pitch.toFixed(2), ts, w, h });
+
+  flashEffect();
+  addThumb(photos.length - 1);
+  showToast(`Photo ${photos.length} capturée — ${w}×${h}`);
+  vibrate();
+}
+
+function flashEffect() {
+  const fl = document.getElementById('flash');
+  fl.classList.add('fire');
+  setTimeout(() => fl.classList.remove('fire'), 120);
+}
+
+function vibrate() {
+  if (navigator.vibrate) navigator.vibrate([40]);
+}
+
+// ── MINIATURES ───────────────────────────────────────────────────
+function addThumb(idx) {
+  const strip = document.getElementById('thumb-strip');
+  const img = document.createElement('img');
+  img.src = photos[idx].dataUrl;
+  img.className = 'thumb';
+  img.onclick = () => openViewer(idx);
+  // Insérer avant le compteur
+  const count = document.getElementById('photo-count');
+  strip.insertBefore(img, count);
+  count.textContent = photos.length + ' ph.';
+}
+
+// ── VISIONNEUSE ──────────────────────────────────────────────────
+function openViewer(idx) {
+  viewerIdx = idx;
+  const p = photos[idx];
+  document.getElementById('viewer-img').src = p.dataUrl;
+  document.getElementById('viewer-meta').innerHTML =
+    `${p.w} × ${p.h} px — JPEG qualité max<br>` +
+    `Roulis : ${p.roll}°  ·  Inclinaison : ${p.pitch}°<br>` +
+    `${p.ts.toLocaleString('fr-FR')}`;
+  document.getElementById('viewer').classList.add('open');
+}
+function closeViewer() {
+  document.getElementById('viewer').classList.remove('open');
+  viewerIdx = -1;
+}
+function downloadCurrent() {
+  if (viewerIdx < 0) return;
+  const p = photos[viewerIdx];
+  const a = document.createElement('a');
+  a.href = p.dataUrl;
+  a.download = `piece_${p.ts.toISOString().replace(/[:.]/g,'-')}.jpg`;
+  a.click();
+}
+function deleteCurrent() {
+  if (viewerIdx < 0) return;
+  photos.splice(viewerIdx, 1);
+  // Reconstruire les miniatures
+  rebuildThumbs();
+  closeViewer();
+}
+function rebuildThumbs() {
+  const strip = document.getElementById('thumb-strip');
+  strip.innerHTML = '<div id="photo-count"></div>';
+  photos.forEach((_, i) => addThumb(i));
+}
+
+// ── TOAST ────────────────────────────────────────────────────────
+let toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ── INIT NIVEAUX ─────────────────────────────────────────────────
+updateLevels();
 </script>
 </body>
 </html>
