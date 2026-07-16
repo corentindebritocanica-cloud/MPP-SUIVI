@@ -119,6 +119,39 @@
     text-shadow:0 1px 3px rgba(0,0,0,0.8);
   }
 
+
+  /* ── FLÈCHES DE CORRECTION ── */
+  .band-arrow {
+    position:fixed;
+    pointer-events:none;
+    z-index:12;
+    opacity:0;
+    transition:opacity 0.25s, transform 0.15s;
+    filter:drop-shadow(0 0 4px rgba(0,0,0,0.8));
+  }
+  .band-arrow.show { opacity:1; }
+
+  /* Flèche bande H (gauche) : pointe haut ou bas */
+  #arrow-h {
+    left:4px;
+    top:50%;
+    transform:translateY(-50%);
+    width:20px; height:20px;
+  }
+  /* Flèche bande V (bas) : pointe gauche ou droite */
+  #arrow-v {
+    bottom:4px;
+    left:50%;
+    transform:translateX(-50%);
+    width:20px; height:20px;
+  }
+
+  /* Animation de pulsation sur la flèche */
+  @keyframes arrow-pulse {
+    0%,100% { opacity:1; }
+    50%      { opacity:0.4; }
+  }
+  .band-arrow.show { animation:arrow-pulse 1s ease-in-out infinite; }
   /* ── FLASH ── */
   #flash {
     position:fixed; inset:0;
@@ -343,6 +376,15 @@
 <div id="flash"></div>
 
 <!-- BANDES NIVEAU -->
+
+<!-- FLÈCHES DE CORRECTION -->
+<svg id="arrow-h" class="band-arrow" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+  <polygon id="arrow-h-poly" points="10,2 18,14 2,14" fill="white"/>
+</svg>
+<svg id="arrow-v" class="band-arrow" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+  <polygon id="arrow-v-poly" points="2,10 14,2 14,18" fill="white"/>
+</svg>
+
 <div id="band-h" class="nok"></div>
 <div id="band-v" class="nok"></div>
 <div id="band-h-label">Roulis</div>
@@ -494,6 +536,42 @@ function updateLevels() {
   document.getElementById('band-v-label').textContent =
     pitchOk ? `INCL. ✓ ${pitch.toFixed(1)}°`  : `INCL. ${pitch.toFixed(1)}°`;
 
+  // ── Flèche bande H (roulis) : pointe vers le haut si roll>0, vers le bas si roll<0 ──
+  // roll = gamma : positif = téléphone penché à droite → lever le côté droit → flèche ↑ (lever)
+  // En pratique : si roll > 0, le bord gauche est trop bas → flèche ↑ ; si roll < 0 → flèche ↓
+  const arrowH = document.getElementById('arrow-h');
+  const arrowHPoly = document.getElementById('arrow-h-poly');
+  if (rollOk) {
+    arrowH.classList.remove('show');
+  } else {
+    arrowH.classList.add('show');
+    if (roll > 0) {
+      // Lever → flèche vers le haut  (triangle pointant vers le haut)
+      arrowHPoly.setAttribute('points', '10,2 18,14 2,14');
+    } else {
+      // Baisser → flèche vers le bas (triangle pointant vers le bas)
+      arrowHPoly.setAttribute('points', '10,18 18,6 2,6');
+    }
+  }
+
+  // ── Flèche bande V (inclinaison/pitch) : pointe gauche ou droite ──
+  // pitch = beta : positif = avant du téléphone trop bas → pointer vers la gauche (tirer vers soi)
+  // Si pitch > 0 → flèche ← (pousser le bas) ; si pitch < 0 → flèche →
+  const arrowV = document.getElementById('arrow-v');
+  const arrowVPoly = document.getElementById('arrow-v-poly');
+  if (pitchOk) {
+    arrowV.classList.remove('show');
+  } else {
+    arrowV.classList.add('show');
+    if (pitch > 0) {
+      // Flèche vers la gauche ←
+      arrowVPoly.setAttribute('points', '2,10 14,2 14,18');
+    } else {
+      // Flèche vers la droite →
+      arrowVPoly.setAttribute('points', '18,10 6,2 6,18');
+    }
+  }
+
   // ── Badge ──
   const badge = document.getElementById('plan-badge');
   const lock  = document.getElementById('lock-icon');
@@ -530,8 +608,7 @@ function updateLevels() {
   if (isStable) {
     btn.classList.remove('locked');
     ring.classList.add('ready');
-    // Lancer le compte à rebours automatique si on vient de devenir stable
-    if (!wasStable && !cdRunning) startCountdown();
+
   } else {
     btn.classList.add('locked');
     ring.classList.remove('ready');
@@ -577,13 +654,7 @@ function cancelCountdown() {
 function handleShutter() {
   const btn = document.getElementById('shutter-btn');
   if (btn.classList.contains('locked')) return; // plan pas atteint
-  if (cdRunning) {
-    // Tap pendant le CD → déclencher immédiatement
-    cancelCountdown();
-    takePhoto();
-  } else {
-    takePhoto();
-  }
+  takePhoto();
 }
 
 // ── CAPTURE ──────────────────────────────────────────────────────
@@ -605,23 +676,13 @@ async function takePhoto() {
   photos.push({ dataUrl, blob, fileName, name: '', roll: roll.toFixed(2), pitch: pitch.toFixed(2), ts, w, h });
 
   flashEffect();
-  addThumb(photos.length - 1);
   vibrate([40, 30, 40]);
 
-  // Share Sheet iOS
-  if (navigator.share && navigator.canShare) {
-    const file = new File([blob], fileName, { type: 'image/jpeg' });
-    if (navigator.canShare({ files: [file] })) {
-      try {
-        await navigator.share({ files: [file], title: 'Photo pièce mécanique' });
-        showToast('✓ Image envoyée vers la galerie');
-        return;
-      } catch(e) {
-        if (e.name !== 'AbortError') console.warn(e);
-      }
-    }
-  }
-  showToast(`Photo ${photos.length} capturée — ${w}×${h}`);
+  const idx = photos.length - 1;
+  addThumb(idx);
+
+  // Ouvrir directement la visionneuse pour enregistrer / nommer la photo
+  openViewer(idx);
 }
 
 function flashEffect() {
