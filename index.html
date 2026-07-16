@@ -38,10 +38,11 @@
   /* ── GRILLE DE COMPOSITION (tiers) ── */
   .grid-line {
     position: absolute;
-    background: rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.60);
+    box-shadow: 0 0 6px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,1);
   }
-  .grid-v { width: 1px; top: 0; bottom: 0; }
-  .grid-h { height: 1px; left: 0; right: 0; }
+  .grid-v { width: 2px; top: 0; bottom: 0; }
+  .grid-h { height: 2px; left: 0; right: 0; }
   #gl1 { left: 33.33%; }
   #gl2 { left: 66.66%; }
   #gl3 { top: 33.33%; }
@@ -63,141 +64,36 @@
   #crosshair::before { width: 1px; height: 100%; left: 50%; top: 0; transform: translateX(-50%); }
   #crosshair::after  { height: 1px; width: 100%; top: 50%; left: 0; transform: translateY(-50%); }
 
-  /* ── NIVEAU HORIZONTAL (barre du bas) ── */
-  #level-h-wrap {
-    position: absolute;
-    bottom: 220px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    pointer-events: none;
-  }
-  #level-h-label {
-    font-size: 10px;
-    letter-spacing: 2px;
-    color: rgba(255,255,255,0.45);
-    text-transform: uppercase;
-  }
-  #level-h-bar {
-    width: 220px;
-    height: 4px;
-    background: rgba(255,255,255,0.12);
-    border-radius: 2px;
-    position: relative;
-    overflow: visible;
-  }
-  #level-h-center {
-    position: absolute;
-    left: 50%; top: 50%;
-    transform: translate(-50%, -50%);
-    width: 2px; height: 10px;
-    background: rgba(255,255,255,0.3);
-    border-radius: 1px;
-  }
-  #level-h-bubble {
-    position: absolute;
-    top: 50%;
-    width: 18px; height: 18px;
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    transition: left 0.08s linear, background 0.25s;
-    border: 2px solid rgba(255,255,255,0.9);
-    background: rgba(255,60,60,0.85);
-    box-shadow: 0 0 8px rgba(255,60,60,0.6);
-  }
-  #level-h-bubble.ok {
-    background: rgba(50,220,100,0.9);
-    box-shadow: 0 0 10px rgba(50,220,100,0.7);
-  }
-  #roll-val {
-    font-size: 11px;
-    font-variant-numeric: tabular-nums;
-    color: rgba(255,255,255,0.5);
-    letter-spacing: 1px;
-  }
-
-  /* ── NIVEAU VERTICAL (barre latérale droite) ── */
-  #level-v-wrap {
-    position: absolute;
-    right: 32px;
-    top: 50%;
-    transform: translateY(-50%);
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 6px;
-    pointer-events: none;
-  }
-  #pitch-val {
-    font-size: 11px;
-    font-variant-numeric: tabular-nums;
-    color: rgba(255,255,255,0.5);
-    letter-spacing: 1px;
-    writing-mode: vertical-rl;
-    transform: rotate(180deg);
-  }
-  #level-v-bar {
-    width: 4px;
-    height: 180px;
-    background: rgba(255,255,255,0.12);
-    border-radius: 2px;
-    position: relative;
-    overflow: visible;
-  }
-  #level-v-center {
-    position: absolute;
-    left: 50%; top: 50%;
-    transform: translate(-50%, -50%);
-    height: 2px; width: 10px;
-    background: rgba(255,255,255,0.3);
-    border-radius: 1px;
-  }
-  #level-v-bubble {
-    position: absolute;
-    left: 50%;
-    width: 18px; height: 18px;
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    transition: top 0.08s linear, background 0.25s;
-    border: 2px solid rgba(255,255,255,0.9);
-    background: rgba(255,60,60,0.85);
-    box-shadow: 0 0 8px rgba(255,60,60,0.6);
-  }
-  #level-v-bubble.ok {
-    background: rgba(50,220,100,0.9);
-    box-shadow: 0 0 10px rgba(50,220,100,0.7);
-  }
-
   /* ── BADGE PLAN ── */
   #plan-badge {
     position: absolute;
     top: 58px;
     left: 50%;
     transform: translateX(-50%);
-    padding: 5px 16px;
-    border-radius: 20px;
-    font-size: 11px;
-    letter-spacing: 2px;
+    padding: 8px 22px;
+    border-radius: 24px;
+    font-size: 13px;
+    letter-spacing: 2.5px;
     text-transform: uppercase;
-    font-weight: 600;
-    border: 1px solid;
+    font-weight: 700;
+    border: 2px solid;
     pointer-events: none;
     transition: all 0.3s;
     white-space: nowrap;
-    backdrop-filter: blur(6px);
+    backdrop-filter: blur(10px);
+    text-shadow: 0 1px 4px rgba(0,0,0,0.5);
   }
   #plan-badge.nok {
-    color: rgba(255,100,80,0.95);
-    border-color: rgba(255,100,80,0.5);
-    background: rgba(255,60,60,0.1);
+    color: rgba(255,120,90,1);
+    border-color: rgba(255,90,70,0.6);
+    background: rgba(255,50,30,0.18);
+    box-shadow: 0 0 12px rgba(255,50,30,0.25);
   }
   #plan-badge.ok {
-    color: rgba(50,220,100,0.95);
-    border-color: rgba(50,220,100,0.5);
-    background: rgba(50,220,100,0.1);
+    color: #fff;
+    border-color: rgba(40,230,90,0.9);
+    background: rgba(40,200,80,0.30);
+    box-shadow: 0 0 22px 4px rgba(40,230,90,0.45);
   }
 
   /* ── BOUTON DÉCLENCHEUR ── */
@@ -412,6 +308,67 @@
     transition: opacity 0.3s;
   }
   #lock-icon.show { opacity: 1; }
+
+  /* ── BANDES DE NIVEAU PLEIN ÉCRAN ── */
+  /* Bande HORIZONTALE : couvre toute la hauteur, côté gauche */
+  #band-h {
+    position: fixed;
+    top: 0; left: 0;
+    width: 28px;
+    height: 100%;
+    z-index: 9;
+    pointer-events: none;
+    transition: background 0.35s ease, box-shadow 0.35s ease;
+  }
+  /* Bande VERTICALE : couvre toute la largeur, en bas (au-dessus des contrôles) */
+  #band-v {
+    position: fixed;
+    bottom: 0; left: 0;
+    width: 100%;
+    height: 28px;
+    z-index: 9;
+    pointer-events: none;
+    transition: background 0.35s ease, box-shadow 0.35s ease;
+  }
+  #band-h.ok, #band-v.ok {
+    background: rgba(40, 225, 90, 0.28);
+    box-shadow: inset 0 0 18px rgba(40, 225, 90, 0.5);
+  }
+  #band-h.nok, #band-v.nok {
+    background: rgba(255, 50, 40, 0.22);
+    box-shadow: inset 0 0 18px rgba(255, 50, 40, 0.45);
+  }
+  /* Labels dans les bandes */
+  #band-h-label {
+    position: fixed;
+    left: 4px;
+    top: 50%;
+    transform: translateY(-50%) rotate(-90deg);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.7);
+    pointer-events: none;
+    z-index: 11;
+    white-space: nowrap;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+  }
+  #band-v-label {
+    position: fixed;
+    bottom: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.7);
+    pointer-events: none;
+    z-index: 11;
+    white-space: nowrap;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+  }
 </style>
 </head>
 <body>
@@ -430,6 +387,12 @@
 <!-- FLASH -->
 <div id="flash"></div>
 
+<!-- BANDES NIVEAU PLEIN ÉCRAN -->
+<div id="band-h" class="nok"></div>
+<div id="band-v" class="nok"></div>
+<div id="band-h-label">Roulis</div>
+<div id="band-v-label">Inclinaison</div>
+
 <!-- OVERLAY (grille + niveaux) -->
 <div id="overlay">
   <!-- Grille des tiers -->
@@ -440,25 +403,6 @@
 
   <!-- Crosshair -->
   <div id="crosshair"></div>
-
-  <!-- Niveau horizontal -->
-  <div id="level-h-wrap">
-    <div id="level-h-label">Roulis (horizontal)</div>
-    <div id="level-h-bar">
-      <div id="level-h-center"></div>
-      <div id="level-h-bubble" style="left:50%"></div>
-    </div>
-    <div id="roll-val">0.0°</div>
-  </div>
-
-  <!-- Niveau vertical -->
-  <div id="level-v-wrap">
-    <div id="pitch-val">0.0°</div>
-    <div id="level-v-bar">
-      <div id="level-v-center"></div>
-      <div id="level-v-bubble" style="top:50%"></div>
-    </div>
-  </div>
 
   <!-- Badge PLAN -->
   <div id="plan-badge" class="nok">Ajustez le téléphone</div>
@@ -596,11 +540,7 @@ function updateLevels() {
   // Horizontal (roll = gamma)
   const rClamped = Math.max(-TOL_RANGE, Math.min(TOL_RANGE, roll));
   const hPct = 50 + (rClamped / TOL_RANGE) * 50; // 0..100%
-  const hBubble = document.getElementById('level-h-bubble');
-  hBubble.style.left = hPct + '%';
   const rollOk = Math.abs(roll) <= tol;
-  hBubble.classList.toggle('ok', rollOk);
-  document.getElementById('roll-val').textContent = (roll >= 0 ? '+' : '') + roll.toFixed(1) + '°';
 
   // Vertical (pitch = beta) — on veut beta ≈ 0 pour plan horizontal
   // Quand à plat, beta varie -90 à +90 selon orientation debout vs couché
@@ -608,11 +548,19 @@ function updateLevels() {
   const pNorm = pitch; // 0° = parfaitement à plat
   const pClamped = Math.max(-TOL_RANGE, Math.min(TOL_RANGE, pNorm));
   const vPct = 50 + (pClamped / TOL_RANGE) * 50;
-  const vBubble = document.getElementById('level-v-bubble');
-  vBubble.style.top = vPct + '%';
   const pitchOk = Math.abs(pNorm) <= tol;
-  vBubble.classList.toggle('ok', pitchOk);
-  document.getElementById('pitch-val').textContent = (pNorm >= 0 ? '+' : '') + pNorm.toFixed(1) + '°';
+
+  // Bandes plein écran
+  const bandH = document.getElementById('band-h');
+  const bandV = document.getElementById('band-v');
+  const labelH = document.getElementById('band-h-label');
+  const labelV = document.getElementById('band-v-label');
+
+  bandH.className = rollOk  ? 'ok' : 'nok';
+  bandV.className = pitchOk ? 'ok' : 'nok';
+
+  labelH.textContent = rollOk  ? `ROULIS ✓ ${roll.toFixed(1)}°`  : `ROULIS ${roll.toFixed(1)}°`;
+  labelV.textContent = pitchOk ? `INCL. ✓ ${pNorm.toFixed(1)}°` : `INCL. ${pNorm.toFixed(1)}°`;
 
   // Badge global
   const badge = document.getElementById('plan-badge');
@@ -634,6 +582,8 @@ function updateLevels() {
   if (!sensorAvail) {
     badge.className = 'nok';
     badge.textContent = 'Capteur non disponible';
+    bandH.className = 'nok';
+    bandV.className = 'nok';
   }
 }
 
