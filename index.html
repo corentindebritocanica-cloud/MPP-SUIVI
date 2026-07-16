@@ -7,368 +7,323 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>NiveauCam</title>
 <style>
-  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 
   html, body {
-    width: 100%; height: 100%;
-    background: #000;
-    overflow: hidden;
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
-    touch-action: none;
+    width:100%; height:100%;
+    background:#000;
+    overflow:hidden;
+    font-family:-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+    touch-action:none;
   }
 
-  /* ── VIDEO PLEIN ÉCRAN ── */
+  /* ── VIDEO ── */
   #video {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    object-fit: cover;
-    z-index: 0;
+    position:fixed; top:0; left:0;
+    width:100%; height:100%;
+    object-fit:cover; z-index:0;
   }
 
-  /* ── OVERLAY GLOBAL ── */
+  /* ── OVERLAY ── */
   #overlay {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    z-index: 10;
-    pointer-events: none;
+    position:fixed; top:0; left:0;
+    width:100%; height:100%;
+    z-index:10; pointer-events:none;
   }
 
-  /* ── GRILLE DE COMPOSITION (tiers) ── */
+  /* ── GRILLE TIERS ── */
   .grid-line {
-    position: absolute;
-    background: rgba(255,255,255,0.60);
-    box-shadow: 0 0 6px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,1);
+    position:absolute;
+    background:rgba(255,255,255,0.60);
+    box-shadow:0 0 6px rgba(0,0,0,0.9), 0 0 2px #000;
   }
-  .grid-v { width: 2px; top: 0; bottom: 0; }
-  .grid-h { height: 2px; left: 0; right: 0; }
-  #gl1 { left: 33.33%; }
-  #gl2 { left: 66.66%; }
-  #gl3 { top: 33.33%; }
-  #gl4 { top: 66.66%; }
+  .grid-v { width:2px; top:0; bottom:0; }
+  .grid-h { height:2px; left:0; right:0; }
+  #gl1 { left:33.33%; }
+  #gl2 { left:66.66%; }
+  #gl3 { top:33.33%; }
+  #gl4 { top:66.66%; }
 
-  /* ── CROSSHAIR CENTRAL ── */
+  /* ── CROSSHAIR ── */
   #crosshair {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    width: 40px; height: 40px;
-    pointer-events: none;
+    position:absolute; top:50%; left:50%;
+    transform:translate(-50%,-50%);
+    width:40px; height:40px; pointer-events:none;
   }
   #crosshair::before, #crosshair::after {
-    content: '';
-    position: absolute;
-    background: rgba(255,255,255,0.7);
+    content:''; position:absolute; background:rgba(255,255,255,0.7);
   }
-  #crosshair::before { width: 1px; height: 100%; left: 50%; top: 0; transform: translateX(-50%); }
-  #crosshair::after  { height: 1px; width: 100%; top: 50%; left: 0; transform: translateY(-50%); }
+  #crosshair::before { width:1px; height:100%; left:50%; top:0; transform:translateX(-50%); }
+  #crosshair::after  { height:1px; width:100%; top:50%; left:0; transform:translateY(-50%); }
 
   /* ── BADGE PLAN ── */
   #plan-badge {
-    position: absolute;
-    top: 58px;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 8px 22px;
-    border-radius: 24px;
-    font-size: 13px;
-    letter-spacing: 2.5px;
-    text-transform: uppercase;
-    font-weight: 700;
-    border: 2px solid;
-    pointer-events: none;
-    transition: all 0.3s;
-    white-space: nowrap;
-    backdrop-filter: blur(10px);
-    text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+    position:absolute; top:58px; left:50%;
+    transform:translateX(-50%);
+    padding:8px 22px; border-radius:24px;
+    font-size:13px; letter-spacing:2.5px;
+    text-transform:uppercase; font-weight:700;
+    border:2px solid; pointer-events:none;
+    transition:all 0.3s; white-space:nowrap;
+    backdrop-filter:blur(10px);
+    text-shadow:0 1px 4px rgba(0,0,0,0.5);
   }
   #plan-badge.nok {
-    color: rgba(255,120,90,1);
-    border-color: rgba(255,90,70,0.6);
-    background: rgba(255,50,30,0.18);
-    box-shadow: 0 0 12px rgba(255,50,30,0.25);
+    color:rgba(255,120,90,1);
+    border-color:rgba(255,90,70,0.6);
+    background:rgba(255,50,30,0.18);
+    box-shadow:0 0 12px rgba(255,50,30,0.25);
   }
   #plan-badge.ok {
-    color: #fff;
-    border-color: rgba(40,230,90,0.9);
-    background: rgba(40,200,80,0.30);
-    box-shadow: 0 0 22px 4px rgba(40,230,90,0.45);
+    color:#fff;
+    border-color:rgba(40,230,90,0.9);
+    background:rgba(40,200,80,0.30);
+    box-shadow:0 0 22px 4px rgba(40,230,90,0.45);
   }
 
-  /* ── BOUTON DÉCLENCHEUR ── */
-  #controls {
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    z-index: 20;
-    padding-bottom: calc(30px + env(safe-area-inset-bottom));
-    padding-top: 16px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 14px;
-    pointer-events: all;
+  /* ── BANDES PLEIN ÉCRAN ── */
+  #band-h {
+    position:fixed; top:0; left:0;
+    width:28px; height:100%;
+    z-index:9; pointer-events:none;
+    transition:background 0.35s ease, box-shadow 0.35s ease;
+  }
+  #band-v {
+    position:fixed; bottom:0; left:0;
+    width:100%; height:28px;
+    z-index:9; pointer-events:none;
+    transition:background 0.35s ease, box-shadow 0.35s ease;
+  }
+  #band-h.ok, #band-v.ok {
+    background:rgba(40,225,90,0.28);
+    box-shadow:inset 0 0 18px rgba(40,225,90,0.5);
+  }
+  #band-h.nok, #band-v.nok {
+    background:rgba(255,50,40,0.22);
+    box-shadow:inset 0 0 18px rgba(255,50,40,0.45);
+  }
+  #band-h-label {
+    position:fixed; left:4px; top:50%;
+    transform:translateY(-50%) rotate(-90deg);
+    font-size:9px; font-weight:700; letter-spacing:2px;
+    text-transform:uppercase; color:rgba(255,255,255,0.7);
+    pointer-events:none; z-index:11; white-space:nowrap;
+    text-shadow:0 1px 3px rgba(0,0,0,0.8);
+  }
+  #band-v-label {
+    position:fixed; bottom:6px; left:50%;
+    transform:translateX(-50%);
+    font-size:9px; font-weight:700; letter-spacing:2px;
+    text-transform:uppercase; color:rgba(255,255,255,0.7);
+    pointer-events:none; z-index:11; white-space:nowrap;
+    text-shadow:0 1px 3px rgba(0,0,0,0.8);
   }
 
-  /* Infos qualité */
-  #quality-info {
-    font-size: 11px;
-    color: rgba(255,255,255,0.4);
-    letter-spacing: 1px;
-    text-align: center;
-  }
-
-  /* Shutter */
-  #shutter-ring {
-    width: 78px; height: 78px;
-    border-radius: 50%;
-    border: 3px solid rgba(255,255,255,0.8);
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-    position: relative;
-    flex-shrink: 0;
-  }
-  #shutter-btn {
-    width: 62px; height: 62px;
-    border-radius: 50%;
-    background: #fff;
-    border: none;
-    cursor: pointer;
-    transition: transform 0.08s, background 0.15s;
-    position: relative;
-    flex-shrink: 0;
-  }
-  #shutter-btn:active { transform: scale(0.90); background: #ddd; }
-
-  /* Flash overlay */
+  /* ── FLASH ── */
   #flash {
-    position: fixed;
-    top:0;left:0;right:0;bottom:0;
-    background: #fff;
-    z-index: 100;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.06s;
+    position:fixed; inset:0;
+    background:#fff; z-index:100;
+    opacity:0; pointer-events:none;
+    transition:opacity 0.06s;
   }
-  #flash.fire { opacity: 1; }
+  #flash.fire { opacity:1; }
 
-  /* ── PERMISSION SCREEN ── */
+  /* ── PERMISSION ── */
   #perm-screen {
-    position: fixed;
-    inset: 0;
-    background: #0a0a0a;
-    z-index: 200;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
-    padding: 40px;
-    text-align: center;
+    position:fixed; inset:0; background:#0a0a0a; z-index:200;
+    display:flex; flex-direction:column; align-items:center;
+    justify-content:center; gap:20px; padding:40px; text-align:center;
   }
-  #perm-screen .icon { font-size: 52px; }
-  #perm-screen h1 { color: #fff; font-size: 22px; font-weight: 700; }
-  #perm-screen p  { color: rgba(255,255,255,0.5); font-size: 14px; line-height: 1.6; }
+  #perm-screen .icon { font-size:52px; }
+  #perm-screen h1 { color:#fff; font-size:22px; font-weight:700; }
+  #perm-screen p  { color:rgba(255,255,255,0.5); font-size:14px; line-height:1.6; }
   #perm-btn {
-    padding: 14px 32px;
-    border-radius: 14px;
-    border: none;
-    background: #fff;
-    color: #000;
-    font-size: 16px;
-    font-weight: 700;
-    cursor: pointer;
-    margin-top: 8px;
-    font-family: -apple-system, sans-serif;
+    padding:14px 32px; border-radius:14px; border:none;
+    background:#fff; color:#000; font-size:16px; font-weight:700;
+    cursor:pointer; margin-top:8px; font-family:-apple-system,sans-serif;
   }
 
-  /* ── GALERIE MINIATURE ── */
-  #thumb-strip {
-    position: fixed;
-    bottom: calc(160px + env(safe-area-inset-bottom));
-    left: 16px;
-    z-index: 20;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    pointer-events: all;
-  }
-  .thumb {
-    width: 52px; height: 52px;
-    border-radius: 8px;
-    object-fit: cover;
-    border: 2px solid rgba(255,255,255,0.7);
-    cursor: pointer;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.5);
-  }
-  #photo-count {
-    font-size: 10px;
-    color: rgba(255,255,255,0.5);
-    text-align: center;
-    letter-spacing: 1px;
-  }
-
-  /* ── VISIONNEUSE ── */
-  #viewer {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.95);
-    z-index: 300;
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    gap: 16px;
-  }
-  #viewer.open { display: flex; }
-  #viewer img { max-width: 100%; max-height: 70vh; border-radius: 10px; object-fit: contain; }
-  .viewer-meta {
-    font-size: 12px;
-    color: rgba(255,255,255,0.5);
-    text-align: center;
-    letter-spacing: 1px;
-    line-height: 1.8;
-  }
-  .viewer-btns { display: flex; gap: 12px; }
-  .vbtn {
-    padding: 12px 24px;
-    border-radius: 12px;
-    border: none;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    font-family: -apple-system, sans-serif;
-  }
-  #vbtn-download { background: #fff; color: #000; }
-  #vbtn-delete   { background: rgba(255,60,60,0.2); color: #ff4040; border: 1px solid rgba(255,60,60,0.4); }
-  #vbtn-close    { background: rgba(255,255,255,0.1); color: #fff; }
-
-  /* ── TOP BAR ── */
+  /* ── TOPBAR ── */
   #topbar {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    z-index: 20;
-    padding-top: calc(12px + env(safe-area-inset-top));
-    padding-bottom: 10px;
-    padding-left: 20px;
-    padding-right: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    pointer-events: none;
+    position:fixed; top:0; left:0; right:0; z-index:20;
+    padding-top:calc(12px + env(safe-area-inset-top));
+    padding-bottom:10px; padding-left:20px; padding-right:20px;
+    display:flex; align-items:center; justify-content:space-between;
+    pointer-events:none;
   }
   #app-name {
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 3px;
-    color: rgba(255,255,255,0.6);
-    text-transform: uppercase;
+    font-size:13px; font-weight:700; letter-spacing:3px;
+    color:rgba(255,255,255,0.6); text-transform:uppercase;
   }
   #tolerance-display {
-    font-size: 11px;
-    color: rgba(255,255,255,0.4);
-    letter-spacing: 1px;
-    pointer-events: all;
-    cursor: pointer;
-    padding: 4px 10px;
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 10px;
-    backdrop-filter: blur(4px);
+    font-size:11px; color:rgba(255,255,255,0.6); letter-spacing:1px;
+    pointer-events:all; cursor:pointer;
+    padding:5px 12px; border:1px solid rgba(255,255,255,0.25);
+    border-radius:10px; backdrop-filter:blur(4px);
+    font-weight:600;
   }
+
+  /* ── MINIATURES (bande horizontale au-dessus du déclencheur) ── */
+  #thumb-strip {
+    position:fixed;
+    bottom:calc(148px + env(safe-area-inset-bottom));
+    left:0; right:0;
+    z-index:20;
+    display:flex; flex-direction:row;
+    align-items:center; gap:8px;
+    padding:0 20px;
+    pointer-events:all;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  #thumb-strip::-webkit-scrollbar { display:none; }
+  .thumb {
+    width:56px; height:56px; flex-shrink:0;
+    border-radius:8px; object-fit:cover;
+    border:2px solid rgba(255,255,255,0.7);
+    cursor:pointer; box-shadow:0 2px 10px rgba(0,0,0,0.5);
+  }
+  #photo-count {
+    font-size:10px; color:rgba(255,255,255,0.5);
+    letter-spacing:1px; white-space:nowrap; flex-shrink:0;
+  }
+
+  /* ── CONTRÔLES ── */
+  #controls {
+    position:fixed; bottom:0; left:0; right:0; z-index:20;
+    padding-bottom:calc(24px + env(safe-area-inset-bottom));
+    padding-top:12px;
+    display:flex; flex-direction:column; align-items:center; gap:10px;
+    pointer-events:all;
+  }
+  #quality-info {
+    font-size:11px; color:rgba(255,255,255,0.4);
+    letter-spacing:1px; text-align:center;
+  }
+
+  /* Déclencheur */
+  #shutter-wrap {
+    display:flex; align-items:center; justify-content:center;
+    position:relative;
+  }
+  #shutter-ring {
+    width:82px; height:82px; border-radius:50%;
+    border:3px solid rgba(255,255,255,0.5);
+    display:flex; align-items:center; justify-content:center;
+    position:relative;
+    transition:border-color 0.3s, box-shadow 0.3s;
+  }
+  #shutter-ring.ready {
+    border-color:rgba(40,225,90,0.9);
+    box-shadow:0 0 18px 4px rgba(40,225,90,0.4);
+  }
+  /* Pulse animation quand prêt */
+  @keyframes pulse-ring {
+    0%   { transform:scale(1);   opacity:0.7; }
+    70%  { transform:scale(1.18);opacity:0;   }
+    100% { transform:scale(1.18);opacity:0;   }
+  }
+  #shutter-ring.ready::before {
+    content:'';
+    position:absolute; inset:-6px;
+    border-radius:50%;
+    border:3px solid rgba(40,225,90,0.6);
+    animation:pulse-ring 1.5s ease-out infinite;
+  }
+  #shutter-btn {
+    width:66px; height:66px; border-radius:50%;
+    background:#fff; border:none; cursor:pointer;
+    transition:transform 0.08s, background 0.15s, opacity 0.3s;
+  }
+  #shutter-btn:active { transform:scale(0.88); background:#ddd; }
+  #shutter-btn.locked {
+    background:rgba(255,255,255,0.25);
+    cursor:not-allowed;
+  }
+
+  /* Compte à rebours sur le bouton */
+  #countdown-display {
+    position:absolute;
+    font-size:26px; font-weight:800;
+    color:#fff; pointer-events:none;
+    text-shadow:0 2px 8px rgba(0,0,0,0.6);
+    opacity:0; transition:opacity 0.2s;
+  }
+  #countdown-display.show { opacity:1; }
+
+  /* Bouton annuler compte à rebours */
+  #cancel-cd-btn {
+    display:none;
+    padding:7px 18px; border-radius:20px;
+    border:1px solid rgba(255,255,255,0.3);
+    background:rgba(0,0,0,0.4); color:#fff;
+    font-size:12px; font-weight:600;
+    cursor:pointer; letter-spacing:1px;
+    backdrop-filter:blur(4px);
+  }
+  #cancel-cd-btn.show { display:block; }
 
   /* ── TOAST ── */
   #toast {
-    position: fixed;
-    bottom: calc(170px + env(safe-area-inset-bottom));
-    left: 50%; transform: translateX(-50%);
-    background: rgba(50,220,100,0.9);
-    color: #000;
-    font-weight: 700;
-    font-size: 13px;
-    letter-spacing: 1px;
-    padding: 9px 20px;
-    border-radius: 20px;
-    z-index: 50;
-    opacity: 0;
-    transition: opacity 0.3s;
-    pointer-events: none;
-    white-space: nowrap;
+    position:fixed;
+    bottom:calc(158px + env(safe-area-inset-bottom));
+    left:50%; transform:translateX(-50%);
+    background:rgba(40,200,80,0.92); color:#000;
+    font-weight:700; font-size:13px; letter-spacing:1px;
+    padding:9px 20px; border-radius:20px; z-index:50;
+    opacity:0; transition:opacity 0.3s; pointer-events:none; white-space:nowrap;
   }
-  #toast.show { opacity: 1; }
+  #toast.show { opacity:1; }
+  #toast.err  { background:rgba(255,60,40,0.92); color:#fff; }
 
-  /* Lock icon quand parfaitement plan */
+  /* ── VISIONNEUSE ── */
+  #viewer {
+    position:fixed; inset:0; background:rgba(0,0,0,0.96);
+    z-index:300; display:none; flex-direction:column;
+    align-items:center; justify-content:center; padding:20px; gap:16px;
+  }
+  #viewer.open { display:flex; }
+  #viewer-img { max-width:100%; max-height:60vh; border-radius:10px; object-fit:contain; }
+
+  /* Champ nom de pièce */
+  #piece-name-wrap {
+    display:flex; flex-direction:column; gap:6px; width:100%; max-width:340px;
+  }
+  #piece-name-wrap label {
+    font-size:11px; color:rgba(255,255,255,0.5); letter-spacing:1.5px;
+    text-transform:uppercase;
+  }
+  #piece-name-input {
+    background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2);
+    border-radius:10px; color:#fff; font-size:15px; padding:10px 14px;
+    outline:none; font-family:-apple-system,sans-serif; width:100%;
+    transition:border-color 0.2s;
+  }
+  #piece-name-input:focus { border-color:rgba(40,225,90,0.7); }
+  #piece-name-input::placeholder { color:rgba(255,255,255,0.25); }
+
+  .viewer-meta {
+    font-size:12px; color:rgba(255,255,255,0.45);
+    text-align:center; letter-spacing:1px; line-height:1.8;
+  }
+  .viewer-btns { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+  .vbtn {
+    padding:11px 22px; border-radius:12px; border:none;
+    font-size:14px; font-weight:600; cursor:pointer;
+    font-family:-apple-system,sans-serif;
+  }
+  #vbtn-download { background:#fff; color:#000; }
+  #vbtn-delete   { background:rgba(255,60,60,0.2); color:#ff4040; border:1px solid rgba(255,60,60,0.4); }
+  #vbtn-close    { background:rgba(255,255,255,0.1); color:#fff; }
+
+  /* Lock icon */
   #lock-icon {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 22px;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s;
+    position:absolute; top:50%; left:50%;
+    transform:translate(-50%,-50%);
+    font-size:22px; opacity:0; pointer-events:none; transition:opacity 0.3s;
   }
-  #lock-icon.show { opacity: 1; }
-
-  /* ── BANDES DE NIVEAU PLEIN ÉCRAN ── */
-  /* Bande HORIZONTALE : couvre toute la hauteur, côté gauche */
-  #band-h {
-    position: fixed;
-    top: 0; left: 0;
-    width: 28px;
-    height: 100%;
-    z-index: 9;
-    pointer-events: none;
-    transition: background 0.35s ease, box-shadow 0.35s ease;
-  }
-  /* Bande VERTICALE : couvre toute la largeur, en bas (au-dessus des contrôles) */
-  #band-v {
-    position: fixed;
-    bottom: 0; left: 0;
-    width: 100%;
-    height: 28px;
-    z-index: 9;
-    pointer-events: none;
-    transition: background 0.35s ease, box-shadow 0.35s ease;
-  }
-  #band-h.ok, #band-v.ok {
-    background: rgba(40, 225, 90, 0.28);
-    box-shadow: inset 0 0 18px rgba(40, 225, 90, 0.5);
-  }
-  #band-h.nok, #band-v.nok {
-    background: rgba(255, 50, 40, 0.22);
-    box-shadow: inset 0 0 18px rgba(255, 50, 40, 0.45);
-  }
-  /* Labels dans les bandes */
-  #band-h-label {
-    position: fixed;
-    left: 4px;
-    top: 50%;
-    transform: translateY(-50%) rotate(-90deg);
-    font-size: 9px;
-    font-weight: 700;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: rgba(255,255,255,0.7);
-    pointer-events: none;
-    z-index: 11;
-    white-space: nowrap;
-    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
-  }
-  #band-v-label {
-    position: fixed;
-    bottom: 6px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 9px;
-    font-weight: 700;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: rgba(255,255,255,0.7);
-    pointer-events: none;
-    z-index: 11;
-    white-space: nowrap;
-    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
-  }
+  #lock-icon.show { opacity:1; }
 </style>
 </head>
 <body>
@@ -387,27 +342,20 @@
 <!-- FLASH -->
 <div id="flash"></div>
 
-<!-- BANDES NIVEAU PLEIN ÉCRAN -->
+<!-- BANDES NIVEAU -->
 <div id="band-h" class="nok"></div>
 <div id="band-v" class="nok"></div>
 <div id="band-h-label">Roulis</div>
 <div id="band-v-label">Inclinaison</div>
 
-<!-- OVERLAY (grille + niveaux) -->
+<!-- OVERLAY -->
 <div id="overlay">
-  <!-- Grille des tiers -->
   <div class="grid-line grid-v" id="gl1"></div>
   <div class="grid-line grid-v" id="gl2"></div>
   <div class="grid-line grid-h" id="gl3"></div>
   <div class="grid-line grid-h" id="gl4"></div>
-
-  <!-- Crosshair -->
   <div id="crosshair"></div>
-
-  <!-- Badge PLAN -->
   <div id="plan-badge" class="nok">Ajustez le téléphone</div>
-
-  <!-- Lock -->
   <div id="lock-icon">🔒</div>
 </div>
 
@@ -417,25 +365,33 @@
   <div id="tolerance-display" onclick="cycleTolerance()">±<span id="tol-val">1.5</span>°</div>
 </div>
 
-<!-- MINIATURES -->
+<!-- MINIATURES (bande horizontale) -->
 <div id="thumb-strip">
   <div id="photo-count"></div>
 </div>
 
 <!-- CONTRÔLES -->
 <div id="controls">
-  <div id="quality-info" id="quality-info">— caméra en cours —</div>
-  <div id="shutter-ring">
-    <button id="shutter-btn" onclick="takePhoto()" title="Capturer"></button>
+  <div id="quality-info">— caméra en cours —</div>
+  <div id="shutter-wrap">
+    <div id="shutter-ring">
+      <button id="shutter-btn" class="locked" onclick="handleShutter()" title="Capturer"></button>
+      <div id="countdown-display"></div>
+    </div>
   </div>
+  <button id="cancel-cd-btn" onclick="cancelCountdown()">✕ Annuler</button>
 </div>
 
 <!-- VISIONNEUSE -->
 <div id="viewer">
   <img id="viewer-img" src="" alt="">
+  <div id="piece-name-wrap">
+    <label for="piece-name-input">Référence / nom de la pièce</label>
+    <input id="piece-name-input" type="text" placeholder="ex : bride_M8_inox" autocomplete="off" autocorrect="off">
+  </div>
   <div class="viewer-meta" id="viewer-meta"></div>
   <div class="viewer-btns">
-    <button class="vbtn" id="vbtn-download" onclick="downloadCurrent()">⬇ Télécharger</button>
+    <button class="vbtn" id="vbtn-download" onclick="downloadCurrent()">⬇ Enregistrer</button>
     <button class="vbtn" id="vbtn-delete" onclick="deleteCurrent()">✕ Supprimer</button>
     <button class="vbtn" id="vbtn-close" onclick="closeViewer()">Fermer</button>
   </div>
@@ -447,30 +403,35 @@
 <script>
 // ── CONFIG ──────────────────────────────────────────────────────
 const TOLERANCES = [0.5, 1.0, 1.5, 2.5];
-let tolIdx = 2; // défaut 1.5°
-let currentTol = () => TOLERANCES[tolIdx];
+let tolIdx = 2;
+const currentTol = () => TOLERANCES[tolIdx];
+
+// Stabilisation : nb de lectures consécutives dans la tolérance avant de valider
+const STABLE_FRAMES = 12; // ~600ms à 20Hz
 
 // ── STATE ───────────────────────────────────────────────────────
-let roll  = 0;  // rotation gauche/droite (axe Z)  → niveau H
-let pitch = 0;  // inclinaison avant/arrière (axe X) → niveau V
+let roll  = 0;
+let pitch = 0;
 let stream = null;
-let photos = []; // [{dataUrl, roll, pitch, ts, w, h}]
+let photos = [];
 let viewerIdx = -1;
 let sensorAvail = false;
 let gyroGranted = false;
+let stableCount = 0;      // frames stables consécutives
+let wasStable = false;    // état précédent
+let cdTimer = null;       // setInterval du compte à rebours
+let cdValue = 0;          // secondes restantes
+let cdRunning = false;
 
-// ── CAMERA INIT ─────────────────────────────────────────────────
+// ── CAMERA ──────────────────────────────────────────────────────
 async function initCamera() {
   document.getElementById('perm-screen').style.display = 'none';
-
-  // Contraintes maximales pour iPhone 16 Pro Max
   const constraints = {
     video: {
       facingMode: { ideal: 'environment' },
-      width:       { ideal: 4032 },
-      height:      { ideal: 3024 },
-      frameRate:   { ideal: 60 },
-      // Qualité maximale
+      width:  { ideal: 4032 },
+      height: { ideal: 3024 },
+      frameRate: { ideal: 60 },
       advanced: [
         { width: 4032, height: 3024 },
         { width: 3840, height: 2160 },
@@ -478,94 +439,64 @@ async function initCamera() {
       ]
     }
   };
-
   try {
     stream = await navigator.mediaDevices.getUserMedia(constraints);
     const video = document.getElementById('video');
     video.srcObject = stream;
     await video.play();
-
-    // Afficher la résolution obtenue
-    const track = stream.getVideoTracks()[0];
-    const settings = track.getSettings();
+    const settings = stream.getVideoTracks()[0].getSettings();
     document.getElementById('quality-info').textContent =
-      `${settings.width || '?'} × ${settings.height || '?'} px`;
-
+      `${settings.width||'?'} × ${settings.height||'?'} px`;
     initGyro();
   } catch(e) {
-    alert('Erreur caméra : ' + e.message + '\n\nOuvre cette app dans Safari sur iOS.');
+    alert('Erreur caméra : ' + e.message + '\n\nOuvre dans Safari sur iOS.');
   }
 }
 
 // ── GYROSCOPE ───────────────────────────────────────────────────
 function initGyro() {
-  // iOS 13+ nécessite une permission explicite pour DeviceMotion
   if (typeof DeviceOrientationEvent !== 'undefined' &&
       typeof DeviceOrientationEvent.requestPermission === 'function') {
-    // Demander la permission gyro via le bouton shutter (geste utilisateur)
     document.getElementById('shutter-btn').addEventListener('click', requestGyroOnce, { once: true });
-    listenOrientation(); // on essaie quand même (peut fonctionner avant le clic)
+    listenOrientation();
   } else {
     listenOrientation();
   }
 }
-
 async function requestGyroOnce() {
   if (gyroGranted) return;
   try {
     const r = await DeviceOrientationEvent.requestPermission();
     if (r === 'granted') { gyroGranted = true; listenOrientation(); }
-  } catch(e) { /* silencieux */ }
+  } catch(e) {}
 }
-
 function listenOrientation() {
   window.addEventListener('deviceorientation', e => {
     sensorAvail = true;
-    // gamma = roulis gauche/droite (-90..+90)
-    // beta  = inclinaison avant/arrière (-180..+180)
-    roll  = e.gamma ?? 0;   // axe horizontal
-    pitch = e.beta  ?? 0;   // axe vertical
-    // Quand le téléphone est à plat (photo du dessus), beta ≈ 0
-    // On recentre : on veut beta proche de 0 (plan horizontal)
+    roll  = e.gamma ?? 0;
+    pitch = e.beta  ?? 0;
     updateLevels();
   }, true);
 }
 
-// ── NIVEAUX ─────────────────────────────────────────────────────
-const TOL_RANGE = 45; // degrés max représentés sur la barre
-
+// ── NIVEAUX + STABILISATION ──────────────────────────────────────
 function updateLevels() {
   const tol = currentTol();
+  const rollOk  = Math.abs(roll)  <= tol;
+  const pitchOk = Math.abs(pitch) <= tol;
+  const allOk   = rollOk && pitchOk && sensorAvail;
 
-  // Horizontal (roll = gamma)
-  const rClamped = Math.max(-TOL_RANGE, Math.min(TOL_RANGE, roll));
-  const hPct = 50 + (rClamped / TOL_RANGE) * 50; // 0..100%
-  const rollOk = Math.abs(roll) <= tol;
+  // ── Bandes ──
+  document.getElementById('band-h').className = rollOk  ? 'ok' : 'nok';
+  document.getElementById('band-v').className = pitchOk ? 'ok' : 'nok';
+  document.getElementById('band-h-label').textContent =
+    rollOk  ? `ROULIS ✓ ${roll.toFixed(1)}°`  : `ROULIS ${roll.toFixed(1)}°`;
+  document.getElementById('band-v-label').textContent =
+    pitchOk ? `INCL. ✓ ${pitch.toFixed(1)}°`  : `INCL. ${pitch.toFixed(1)}°`;
 
-  // Vertical (pitch = beta) — on veut beta ≈ 0 pour plan horizontal
-  // Quand à plat, beta varie -90 à +90 selon orientation debout vs couché
-  // On normalise autour de 0 (téléphone à plat face vers le ciel)
-  const pNorm = pitch; // 0° = parfaitement à plat
-  const pClamped = Math.max(-TOL_RANGE, Math.min(TOL_RANGE, pNorm));
-  const vPct = 50 + (pClamped / TOL_RANGE) * 50;
-  const pitchOk = Math.abs(pNorm) <= tol;
-
-  // Bandes plein écran
-  const bandH = document.getElementById('band-h');
-  const bandV = document.getElementById('band-v');
-  const labelH = document.getElementById('band-h-label');
-  const labelV = document.getElementById('band-v-label');
-
-  bandH.className = rollOk  ? 'ok' : 'nok';
-  bandV.className = pitchOk ? 'ok' : 'nok';
-
-  labelH.textContent = rollOk  ? `ROULIS ✓ ${roll.toFixed(1)}°`  : `ROULIS ${roll.toFixed(1)}°`;
-  labelV.textContent = pitchOk ? `INCL. ✓ ${pNorm.toFixed(1)}°` : `INCL. ${pNorm.toFixed(1)}°`;
-
-  // Badge global
+  // ── Badge ──
   const badge = document.getElementById('plan-badge');
   const lock  = document.getElementById('lock-icon');
-  const allOk = rollOk && pitchOk;
   if (allOk) {
     badge.className = 'ok';
     badge.textContent = '✓ PARFAITEMENT PLAN';
@@ -574,20 +505,220 @@ function updateLevels() {
     badge.className = 'nok';
     const parts = [];
     if (!rollOk)  parts.push(`roulis ${roll.toFixed(1)}°`);
-    if (!pitchOk) parts.push(`incl. ${pNorm.toFixed(1)}°`);
-    badge.textContent = parts.join('  ·  ');
+    if (!pitchOk) parts.push(`incl. ${pitch.toFixed(1)}°`);
+    badge.textContent = sensorAvail ? parts.join('  ·  ') : 'Capteur non disponible';
     lock.classList.remove('show');
+    if (!sensorAvail) {
+      document.getElementById('band-h').className = 'nok';
+      document.getElementById('band-v').className = 'nok';
+    }
   }
 
-  if (!sensorAvail) {
-    badge.className = 'nok';
-    badge.textContent = 'Capteur non disponible';
-    bandH.className = 'nok';
-    bandV.className = 'nok';
+  // ── Stabilisation gyro ──
+  if (allOk) {
+    stableCount = Math.min(stableCount + 1, STABLE_FRAMES);
+  } else {
+    stableCount = 0;
+    // Si on bouge alors qu'un CD tourne → annuler
+    if (cdRunning) cancelCountdown();
+  }
+  const isStable = stableCount >= STABLE_FRAMES;
+
+  // ── Déclencheur : verrouillé / prêt ──
+  const btn  = document.getElementById('shutter-btn');
+  const ring = document.getElementById('shutter-ring');
+  if (isStable) {
+    btn.classList.remove('locked');
+    ring.classList.add('ready');
+    // Lancer le compte à rebours automatique si on vient de devenir stable
+    if (!wasStable && !cdRunning) startCountdown();
+  } else {
+    btn.classList.add('locked');
+    ring.classList.remove('ready');
+  }
+  wasStable = isStable;
+}
+
+// ── COMPTE À REBOURS ─────────────────────────────────────────────
+function startCountdown() {
+  cdRunning = true;
+  cdValue = 2;
+  const display = document.getElementById('countdown-display');
+  const cancelBtn = document.getElementById('cancel-cd-btn');
+  display.textContent = cdValue;
+  display.classList.add('show');
+  cancelBtn.classList.add('show');
+  vibrate([20]);
+
+  cdTimer = setInterval(() => {
+    cdValue--;
+    if (cdValue <= 0) {
+      clearInterval(cdTimer);
+      cdTimer = null;
+      display.classList.remove('show');
+      cancelBtn.classList.remove('show');
+      cdRunning = false;
+      takePhoto();
+    } else {
+      display.textContent = cdValue;
+      vibrate([20]);
+    }
+  }, 1000);
+}
+
+function cancelCountdown() {
+  if (cdTimer) { clearInterval(cdTimer); cdTimer = null; }
+  cdRunning = false;
+  document.getElementById('countdown-display').classList.remove('show');
+  document.getElementById('cancel-cd-btn').classList.remove('show');
+}
+
+// ── DÉCLENCHEUR MANUEL ───────────────────────────────────────────
+function handleShutter() {
+  const btn = document.getElementById('shutter-btn');
+  if (btn.classList.contains('locked')) return; // plan pas atteint
+  if (cdRunning) {
+    // Tap pendant le CD → déclencher immédiatement
+    cancelCountdown();
+    takePhoto();
+  } else {
+    takePhoto();
   }
 }
 
-// Simulation si pas de gyro (desktop) — pour test
+// ── CAPTURE ──────────────────────────────────────────────────────
+async function takePhoto() {
+  const video = document.getElementById('video');
+  if (!video.srcObject) return;
+
+  const w = video.videoWidth  || 4032;
+  const h = video.videoHeight || 3024;
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  canvas.getContext('2d').drawImage(video, 0, 0, w, h);
+
+  const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 1.0));
+  const dataUrl = URL.createObjectURL(blob);
+  const ts = new Date();
+  const fileName = `piece_${ts.toISOString().replace(/[:.]/g,'-')}.jpg`;
+
+  photos.push({ dataUrl, blob, fileName, name: '', roll: roll.toFixed(2), pitch: pitch.toFixed(2), ts, w, h });
+
+  flashEffect();
+  addThumb(photos.length - 1);
+  vibrate([40, 30, 40]);
+
+  // Share Sheet iOS
+  if (navigator.share && navigator.canShare) {
+    const file = new File([blob], fileName, { type: 'image/jpeg' });
+    if (navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: 'Photo pièce mécanique' });
+        showToast('✓ Image envoyée vers la galerie');
+        return;
+      } catch(e) {
+        if (e.name !== 'AbortError') console.warn(e);
+      }
+    }
+  }
+  showToast(`Photo ${photos.length} capturée — ${w}×${h}`);
+}
+
+function flashEffect() {
+  const fl = document.getElementById('flash');
+  fl.classList.add('fire');
+  setTimeout(() => fl.classList.remove('fire'), 120);
+}
+function vibrate(pattern = [40]) {
+  if (navigator.vibrate) navigator.vibrate(pattern);
+}
+
+// ── MINIATURES ───────────────────────────────────────────────────
+function addThumb(idx) {
+  const strip = document.getElementById('thumb-strip');
+  const img = document.createElement('img');
+  img.src = photos[idx].dataUrl;
+  img.className = 'thumb';
+  img.onclick = () => openViewer(idx);
+  const count = document.getElementById('photo-count');
+  strip.insertBefore(img, count);
+  count.textContent = photos.length + ' ph.';
+  // Scroller jusqu'à la nouvelle miniature
+  strip.scrollLeft = 0;
+}
+
+// ── VISIONNEUSE ──────────────────────────────────────────────────
+function openViewer(idx) {
+  viewerIdx = idx;
+  const p = photos[idx];
+  document.getElementById('viewer-img').src = p.dataUrl;
+  document.getElementById('piece-name-input').value = p.name || '';
+  document.getElementById('viewer-meta').innerHTML =
+    `${p.w} × ${p.h} px — JPEG qualité max<br>` +
+    `Roulis : ${p.roll}°  ·  Incl. : ${p.pitch}°<br>` +
+    `${p.ts.toLocaleString('fr-FR')}`;
+  document.getElementById('viewer').classList.add('open');
+}
+function closeViewer() {
+  // Sauvegarder le nom saisi
+  if (viewerIdx >= 0) {
+    photos[viewerIdx].name = document.getElementById('piece-name-input').value.trim();
+  }
+  document.getElementById('viewer').classList.remove('open');
+  viewerIdx = -1;
+}
+async function downloadCurrent() {
+  if (viewerIdx < 0) return;
+  const p = photos[viewerIdx];
+  // Nom de fichier incluant la référence pièce si renseignée
+  const namePart = p.name ? p.name.replace(/[^a-zA-Z0-9_-]/g,'_') : '';
+  const finalName = namePart
+    ? `${namePart}_${p.ts.toISOString().replace(/[:.]/g,'-')}.jpg`
+    : p.fileName;
+
+  if (navigator.share && navigator.canShare && p.blob) {
+    const file = new File([p.blob], finalName, { type: 'image/jpeg' });
+    if (navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: p.name || 'Photo pièce mécanique' });
+        return;
+      } catch(e) { if (e.name === 'AbortError') return; }
+    }
+  }
+  const a = document.createElement('a');
+  a.href = p.dataUrl; a.download = finalName; a.click();
+}
+function deleteCurrent() {
+  if (viewerIdx < 0) return;
+  photos.splice(viewerIdx, 1);
+  rebuildThumbs();
+  closeViewer();
+}
+function rebuildThumbs() {
+  const strip = document.getElementById('thumb-strip');
+  strip.innerHTML = '<div id="photo-count"></div>';
+  photos.forEach((_, i) => addThumb(i));
+}
+
+// ── TOLÉRANCE ────────────────────────────────────────────────────
+function cycleTolerance() {
+  tolIdx = (tolIdx + 1) % TOLERANCES.length;
+  document.getElementById('tol-val').textContent = TOLERANCES[tolIdx].toFixed(1);
+  showToast(`Tolérance ±${TOLERANCES[tolIdx].toFixed(1)}°`);
+  stableCount = 0; // reset stabilisation
+}
+
+// ── TOAST ────────────────────────────────────────────────────────
+let toastTimer = null;
+function showToast(msg, err=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = err ? 'err show' : 'show';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.className = '', 2400);
+}
+
+// ── SIMULATION DESKTOP (test sans gyro) ──────────────────────────
 if (typeof DeviceOrientationEvent === 'undefined') {
   let t = 0;
   setInterval(() => {
@@ -599,141 +730,7 @@ if (typeof DeviceOrientationEvent === 'undefined') {
   }, 50);
 }
 
-// ── TOLÉRANCE ───────────────────────────────────────────────────
-function cycleTolerance() {
-  tolIdx = (tolIdx + 1) % TOLERANCES.length;
-  document.getElementById('tol-val').textContent = TOLERANCES[tolIdx].toFixed(1);
-  showToast(`Tolérance ±${TOLERANCES[tolIdx].toFixed(1)}°`);
-}
-
-// ── CAPTURE PHOTO ────────────────────────────────────────────────
-async function takePhoto() {
-  const video = document.getElementById('video');
-  if (!video.srcObject) return;
-
-  // Résolution native de la vidéo
-  const w = video.videoWidth  || 4032;
-  const h = video.videoHeight || 3024;
-
-  const canvas = document.createElement('canvas');
-  canvas.width  = w;
-  canvas.height = h;
-  const c = canvas.getContext('2d');
-  c.drawImage(video, 0, 0, w, h);
-
-  // Qualité maximale JPEG → Blob
-  const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 1.0));
-  const dataUrl = URL.createObjectURL(blob);
-  const ts = new Date();
-  const fileName = `piece_${ts.toISOString().replace(/[:.]/g,'-')}.jpg`;
-
-  photos.push({ dataUrl, blob, fileName, roll: roll.toFixed(2), pitch: pitch.toFixed(2), ts, w, h });
-
-  flashEffect();
-  addThumb(photos.length - 1);
-  vibrate();
-
-  // ── SHARE SHEET iOS (enregistrement direct dans la galerie) ──
-  if (navigator.share && navigator.canShare) {
-    const file = new File([blob], fileName, { type: 'image/jpeg' });
-    if (navigator.canShare({ files: [file] })) {
-      try {
-        await navigator.share({
-          files: [file],
-          title: 'Photo pièce mécanique',
-        });
-        showToast('✓ Image envoyée vers la galerie');
-        return;
-      } catch(e) {
-        // Utilisateur a annulé le share → on garde juste en local
-        if (e.name !== 'AbortError') console.warn('Share error', e);
-      }
-    }
-  }
-
-  // Fallback : téléchargement direct (desktop / navigateur non compatible)
-  showToast(`Photo ${photos.length} — ${w}×${h} · Tap miniature pour sauvegarder`);
-}
-
-function flashEffect() {
-  const fl = document.getElementById('flash');
-  fl.classList.add('fire');
-  setTimeout(() => fl.classList.remove('fire'), 120);
-}
-
-function vibrate() {
-  if (navigator.vibrate) navigator.vibrate([40]);
-}
-
-// ── MINIATURES ───────────────────────────────────────────────────
-function addThumb(idx) {
-  const strip = document.getElementById('thumb-strip');
-  const img = document.createElement('img');
-  img.src = photos[idx].dataUrl;
-  img.className = 'thumb';
-  img.onclick = () => openViewer(idx);
-  // Insérer avant le compteur
-  const count = document.getElementById('photo-count');
-  strip.insertBefore(img, count);
-  count.textContent = photos.length + ' ph.';
-}
-
-// ── VISIONNEUSE ──────────────────────────────────────────────────
-function openViewer(idx) {
-  viewerIdx = idx;
-  const p = photos[idx];
-  document.getElementById('viewer-img').src = p.dataUrl;
-  document.getElementById('viewer-meta').innerHTML =
-    `${p.w} × ${p.h} px — JPEG qualité max<br>` +
-    `Roulis : ${p.roll}°  ·  Inclinaison : ${p.pitch}°<br>` +
-    `${p.ts.toLocaleString('fr-FR')}`;
-  document.getElementById('viewer').classList.add('open');
-}
-function closeViewer() {
-  document.getElementById('viewer').classList.remove('open');
-  viewerIdx = -1;
-}
-async function downloadCurrent() {
-  if (viewerIdx < 0) return;
-  const p = photos[viewerIdx];
-  if (navigator.share && navigator.canShare && p.blob) {
-    const file = new File([p.blob], p.fileName, { type: 'image/jpeg' });
-    if (navigator.canShare({ files: [file] })) {
-      try {
-        await navigator.share({ files: [file], title: 'Photo pièce mécanique' });
-        return;
-      } catch(e) { if (e.name === 'AbortError') return; }
-    }
-  }
-  const a = document.createElement('a');
-  a.href = p.dataUrl;
-  a.download = p.fileName || `piece.jpg`;
-  a.click();
-}
-function deleteCurrent() {
-  if (viewerIdx < 0) return;
-  photos.splice(viewerIdx, 1);
-  // Reconstruire les miniatures
-  rebuildThumbs();
-  closeViewer();
-}
-function rebuildThumbs() {
-  const strip = document.getElementById('thumb-strip');
-  strip.innerHTML = '<div id="photo-count"></div>';
-  photos.forEach((_, i) => addThumb(i));
-}
-
-// ── TOAST ────────────────────────────────────────────────────────
-let toastTimer = null;
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
-}
-
-// ── INIT NIVEAUX ─────────────────────────────────────────────────
+// ── INIT ─────────────────────────────────────────────────────────
 updateLevels();
 </script>
 </body>
