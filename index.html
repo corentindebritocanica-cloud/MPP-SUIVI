@@ -531,7 +531,7 @@
 
   /* ── BOUTON SETTINGS ── */
   #settings-btn {
-    position:fixed; top:calc(10px + env(safe-area-inset-top)); left:16px;
+    position:fixed; top:calc(10px + env(safe-area-inset-top)); right:16px;
     z-index:25; pointer-events:all;
     width:36px; height:36px; border-radius:50%; border:none; cursor:pointer;
     background:var(--glass-2); backdrop-filter:blur(24px) saturate(2);
@@ -549,7 +549,7 @@
 
   /* ── PANNEAU SETTINGS ── */
   #settings-panel {
-    position:fixed; top:calc(54px + env(safe-area-inset-top)); left:12px;
+    position:fixed; top:calc(54px + env(safe-area-inset-top)); right:12px;
     z-index:24; width:260px;
     background:rgba(22,22,24,.92);
     backdrop-filter:blur(40px) saturate(1.8);
@@ -558,7 +558,7 @@
     border-radius:22px;
     box-shadow:0 20px 60px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.18);
     padding:6px 0;
-    transform-origin:top left;
+    transform-origin:top right;
     transform:scale(.85); opacity:0;
     pointer-events:none;
     transition:transform .25s cubic-bezier(.34,1.56,.64,1), opacity .2s;
@@ -1205,8 +1205,11 @@ function toggleHUD(key) {
   const tog = document.getElementById('tog-' + key);
   tog.classList.toggle('on', hudState[key]);
   hudTargets[key]().forEach(el => {
-    el.style.opacity = hudState[key] ? '' : '0';
-    el.style.pointerEvents = hudState[key] ? '' : 'none';
+    // Forcer opacity explicitement — les animations CSS laissent opacity:0
+    // dans le style calculé, 'inherit' ou '' ne suffit pas.
+    el.style.setProperty('opacity',        hudState[key] ? '1' : '0', 'important');
+    el.style.setProperty('pointer-events', hudState[key] ? ''  : 'none', 'important');
+    el.style.setProperty('visibility',     hudState[key] ? 'visible' : 'hidden', 'important');
   });
 }
 
