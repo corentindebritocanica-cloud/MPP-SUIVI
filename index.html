@@ -106,10 +106,10 @@
     opacity:0; transition:opacity .3s;
   }
   .band-arrow.show { opacity:1; }
-  /* Bande gauche — roulis */
-  #arrow-h { left:14px; top:50%; transform:translateY(-50%); width:28px; height:28px; }
-  /* Bande basse — inclinaison */
-  #arrow-v { bottom:14px; left:50%; transform:translateX(-50%); width:28px; height:28px; }
+  /* Bande gauche — roulis : flèche au-dessus du label ROULIS */
+  #arrow-h { left:8px; top:calc(50% - 40px); transform:translateY(-50%); width:28px; height:28px; }
+  /* Bande basse — inclinaison : flèche remontée au-dessus du label INCL. */
+  #arrow-v { bottom:46px; left:50%; transform:translateX(-50%); width:28px; height:28px; }
 
   #arrow-h.show { animation:arr-bounce-v 1s ease-in-out infinite; }
   #arrow-v.show { animation:arr-bounce-h 1s ease-in-out infinite; }
@@ -118,10 +118,10 @@
   #arrow-h.dir-down.show { animation:arr-bounce-down 1s ease-in-out infinite; }
   #arrow-v.dir-left.show  { animation:arr-bounce-left  1s ease-in-out infinite; }
   #arrow-v.dir-right.show { animation:arr-bounce-right 1s ease-in-out infinite; }
-  @keyframes arr-bounce-up    { 0%,100%{transform:translateY(-50%)} 50%{transform:translateY(calc(-50% - 7px))} }
-  @keyframes arr-bounce-down  { 0%,100%{transform:translateY(-50%)} 50%{transform:translateY(calc(-50% + 7px))} }
-  @keyframes arr-bounce-left  { 0%,100%{transform:translateX(-50%)} 50%{transform:translateX(calc(-50% - 7px))} }
-  @keyframes arr-bounce-right { 0%,100%{transform:translateX(-50%)} 50%{transform:translateX(calc(-50% + 7px))} }
+  @keyframes arr-bounce-up    { 0%,100%{transform:translateY(-50%)} 50%{transform:translateY(calc(-50% - 8px))} }
+  @keyframes arr-bounce-down  { 0%,100%{transform:translateY(-50%)} 50%{transform:translateY(calc(-50% + 8px))} }
+  @keyframes arr-bounce-left  { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(calc(-50% - 8px)) translateY(0)} }
+  @keyframes arr-bounce-right { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(calc(-50% + 8px)) translateY(0)} }
 
   /* ── GRILLE TIERS — traits solides visibles ── */
   .gl {
