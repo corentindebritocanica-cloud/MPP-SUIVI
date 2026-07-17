@@ -790,18 +790,15 @@ function updateLevels() {
 
   // ── Badge ──
   const badge = document.getElementById('plan-badge');
-  const lock  = document.getElementById('lock-icon');
   if (allOk) {
     badge.className = 'ok';
     badge.textContent = '✓ PARFAITEMENT PLAN';
-    lock.classList.add('show');
   } else {
     badge.className = 'nok';
     const parts = [];
     if (!rollOk)  parts.push(`roulis ${roll.toFixed(1)}°`);
     if (!pitchOk) parts.push(`incl. ${pitch.toFixed(1)}°`);
     badge.textContent = sensorAvail ? parts.join('  ·  ') : 'Capteur non disponible';
-    lock.classList.remove('show');
     if (!sensorAvail) {
       document.getElementById('band-h').className = 'nok';
       document.getElementById('band-v').className = 'nok';
@@ -1005,6 +1002,24 @@ if (typeof DeviceOrientationEvent === 'undefined') {
     updateLevels();
   }, 50);
 }
+
+// ── BOUTON VOLUME PHYSIQUE (déclencheur appareil photo iPhone) ──────
+// Safari iOS expose les touches volume via keydown.
+// preventDefault empêche le changement de volume système.
+// Le body doit avoir le focus pour recevoir les événements clavier.
+document.body.setAttribute('tabindex', '-1');
+document.body.focus();
+
+window.addEventListener('keydown', e => {
+  if (e.key === 'AudioVolumeDown' || e.key === 'AudioVolumeUp' ||
+      e.key === 'VolumeDown'      || e.key === 'VolumeUp') {
+    e.preventDefault();
+    handleShutter();
+  }
+}, { passive: false });
+
+// Redonner le focus si l'utilisateur tape ailleurs
+document.addEventListener('click', () => { document.body.focus(); });
 
 // ── INIT ─────────────────────────────────────────────────────────
 updateLevels();
