@@ -1475,6 +1475,11 @@ function initHUDDefaults() {
     const tog = document.getElementById('tog-' + key);
     if (tog) tog.classList.toggle('on', on);
   });
+  // Les flèches sont gérées exclusivement par updateLevels — pas de style forcé
+  ['arrow-h','arrow-v'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.style.removeProperty('opacity'); el.style.removeProperty('visibility'); el.style.removeProperty('pointer-events'); }
+  });
 }
 
 // ── BOUTON VOLUME PHYSIQUE (déclencheur appareil photo iPhone) ──────
