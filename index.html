@@ -70,10 +70,12 @@
 
   #band-h::after {
     content:''; position:absolute; inset:0;
+    background:linear-gradient(to top, currentColor 0%, transparent 100%);
     transition: background .55s cubic-bezier(.4,0,.2,1);
   }
   #band-v::after {
     content:''; position:absolute; inset:0;
+    background:linear-gradient(to right, currentColor 0%, transparent 100%);
     transition: background .55s cubic-bezier(.4,0,.2,1);
   }
   #band-h.ok::after  { background: linear-gradient(to right, rgba(48,209,88,.38) 0%, transparent 100%); }
@@ -1405,7 +1407,7 @@ const hudTargets = {
   grille:   () => document.querySelectorAll('.gl'),
   reticule: () => document.querySelectorAll('#reticle'),
   coins:    () => document.querySelectorAll('.corner'),
-  bandes:   () => document.querySelectorAll('#band-h,#band-v,#band-h-label,#band-v-label,#arrow-h,#arrow-v'),
+  bandes:   () => document.querySelectorAll('#band-h,#band-v,#band-h-label,#band-v-label'),
   badge:    () => document.querySelectorAll('#plan-badge'),
   wordmark: () => document.querySelectorAll('#app-wordmark'),
 };
