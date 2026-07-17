@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#000000">
+<meta name="screen-orientation" content="portrait">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<title>CALIPER Pro CAM</title>
+<style>
+  /* ═══════════════════════════════════════════════════════════════
+     iOS 27 LIQUID GLASS DESIGN LANGUAGE
+     — Deep translucency, frosted surfaces, spring physics
+     — SF Pro ultra-light floating on depth
+     — Hierarchy through material, not color
+     — Signal palette: only red/green for level state
+  ═══════════════════════════════════════════════════════════════ */
+  :root {
+    --ok:        #30D158;
+    --ok-glow:   rgba(48,209,88,.55);
+    --nok:       #FF453A;
+    --nok-glow:  rgba(255,69,58,.50);
+    --white:     rgba(255,255,255,1);
+
+    /* Liquid glass layers */
+    --glass-1:   rgba(255,255,255,0.10);  /* ultra-thin */
+    --glass-2:   rgba(255,255,255,0.16);  /* pill / chip */
+    --glass-3:   rgba(255,255,255,0.22);  /* modal */
+    --glass-4:   rgba(255,255,255,0.88);  /* viewer heavy */
+
+    --stroke:    rgba(255,255,255,0.22);
+    --stroke-hi: rgba(255,255,255,0.55);
+    --ink:       rgba(255,255,255,0.95);
+    --ink-2:     rgba(255,255,255,0.55);
+    --ink-3:     rgba(255,255,255,0.30);
+
+    /* SF Pro stack */
+    --sf: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Google Sans', Roboto, system-ui, sans-serif;
+    --sf-text: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Google Sans', Roboto, system-ui, sans-serif;
+    --mono: ui-monospace, 'SF Mono', 'Roboto Mono', monospace;
+
+    /* Geometry */
+    --r-pill:  999px;
+    --r-card:  28px;
+    --r-chip:  14px;
+    --r-btn:   20px;
+  }
+
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body { width:100%; height:100%; background:#000; overflow:hidden; font-family:var(--sf); touch-action:none; }
+
+  /* ── VIDEO ── */
+  #video { position:fixed; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; }
+
+  /* ── VIGNETTE ── */
+  #vignette {
+    position:fixed; inset:0; z-index:1; pointer-events:none;
+    background: radial-gradient(ellipse 110% 90% at 50% 50%, transparent 42%, rgba(0,0,0,.32) 100%);
+  }
+
+  /* ── BANDES DE NIVEAU (glow pur depuis les bords) ── */
+  #band-h, #band-v {
+    position:fixed; z-index:6; pointer-events:none;
+    transition: opacity .55s cubic-bezier(.4,0,.2,1);
+  }
+  #band-h { bottom:0; left:0; width:100%; height:56px; }
+  #band-v { top:0; left:0; width:56px; height:100%; }
+
+  #band-h::after {
+    content:''; position:absolute; inset:0;
+    background:linear-gradient(to top, currentColor 0%, transparent 100%);
+    transition: background .55s cubic-bezier(.4,0,.2,1);
+  }
+  #band-v::after {
+    content:''; position:absolute; inset:0;
+    background:linear-gradient(to right, currentColor 0%, transparent 100%);
+    transition: background .55s cubic-bezier(.4,0,.2,1);
+  }
+  #band-h.ok::after  { background: linear-gradient(to right, rgba(48,209,88,.38) 0%, transparent 100%); }
+  #band-h.nok::after { background: linear-gradient(to right, rgba(255,69,58,.30) 0%, transparent 100%); animation: breathe 1.8s ease-in-out infinite; }
+  #band-v.ok::after  { background: linear-gradient(to top, rgba(48,209,88,.38) 0%, transparent 100%); }
+  #band-v.nok::after { background: linear-gradient(to top, rgba(255,69,58,.30) 0%, transparent 100%); animation: breathe 1.8s ease-in-out infinite; }
+
+  @keyframes breathe { 0%,100%{opacity:.6} 50%{opacity:1} }
+
+  /* Labels bandes — chip ultra-fine */
+  #band-h-label, #band-v-label {
+    position:fixed; z-index:11; pointer-events:none; white-space:nowrap;
+    font-family:var(--mono); font-size:9.5px; font-weight:500; letter-spacing:1.2px;
+    text-transform:uppercase; color:var(--ink);
+    padding:4px 10px; border-radius:var(--r-pill);
+    background:var(--glass-2); backdrop-filter:blur(20px) saturate(1.8);
+    -webkit-backdrop-filter:blur(20px) saturate(1.8);
+    border:0.5px solid var(--stroke);
+    text-shadow:0 1px 2px rgba(0,0,0,.4);
+    transition: color .4s;
+  }
+  #band-h-label { bottom:10px; left:50%; transform:translateX(-50%); }
+  #band-v-label { left:8px; top:50%; transform:translateY(-50%) rotate(-90deg); }
+  #band-h-label.ok, #band-v-label.ok { color:var(--ok); }
+  #band-h-label.nok, #band-v-label.nok { color:var(--nok); }
+
+  /* ── FLÈCHES DE CORRECTION — triangles SVG ── */
+  .band-arrow {
+    position:fixed; pointer-events:none; z-index:13;
+    opacity:0; transition:opacity .3s;
+  }
+  .band-arrow.show { opacity:1; }
+  /* Bande basse — roulis : flèche centrée, remontée au-dessus du label */
+  #arrow-h { bottom:46px; left:50%; transform:translateX(-50%); width:28px; height:28px; }
+  /* Bande gauche — inclinaison : flèche décalée au-dessus du centre */
+  #arrow-v { left:8px; top:calc(50% - 40px); transform:translateY(-50%); width:28px; height:28px; }
+
+  #arrow-h.dir-left.show  { animation:arr-bounce-left  1s ease-in-out infinite; }
+  #arrow-h.dir-right.show { animation:arr-bounce-right 1s ease-in-out infinite; }
+  #arrow-v.dir-up.show   { animation:arr-bounce-up   1s ease-in-out infinite; }
+  #arrow-v.dir-down.show { animation:arr-bounce-down 1s ease-in-out infinite; }
+  @keyframes arr-bounce-up    { 0%,100%{transform:translateY(-50%)} 50%{transform:translateY(calc(-50% - 8px))} }
+  @keyframes arr-bounce-down  { 0%,100%{transform:translateY(-50%)} 50%{transform:translateY(calc(-50% + 8px))} }
+  @keyframes arr-bounce-left  { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(calc(-50% - 8px)) translateY(0)} }
+  @keyframes arr-bounce-right { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(calc(-50% + 8px)) translateY(0)} }
+
+  /* ── GRILLE TIERS — traits solides visibles ── */
+  .gl {
+    position:fixed; z-index:7; pointer-events:none;
+    opacity:0; animation:fade-in .7s ease .5s forwards;
+  }
+  .gl-v {
+    top:0; bottom:0; width:2px;
+    background:rgba(255,255,255,.52);
+    box-shadow:0 0 6px rgba(0,0,0,.7), 0 0 2px rgba(0,0,0,1);
+  }
+  .gl-h {
+    left:0; right:0; height:2px;
+    background:rgba(255,255,255,.52);
+    box-shadow:0 0 6px rgba(0,0,0,.7), 0 0 2px rgba(0,0,0,1);
+  }
+  #gl1{left:33.33%} #gl2{left:66.66%} #gl3{top:33.33%} #gl4{top:66.66%}
+  @keyframes fade-in { to{opacity:1} }
+
+
+  /* ── BADGE STATUT ── */
+  #plan-badge {
+    position:fixed; top:calc(18px + env(safe-area-inset-top)); left:50%;
+    transform:translateX(-50%) translateY(-6px);
+    display:inline-flex; align-items:center; gap:8px;
+    padding:8px 16px 8px 12px; border-radius:var(--r-pill);
+    font-family:var(--sf-text); font-size:13px; font-weight:500; letter-spacing:-.1px;
+    color:var(--ink); pointer-events:none; white-space:nowrap;
+    background:var(--glass-2); backdrop-filter:blur(24px) saturate(2);
+    -webkit-backdrop-filter:blur(24px) saturate(2);
+    border:0.5px solid var(--stroke);
+    box-shadow:0 8px 32px rgba(0,0,0,.28), inset 0 1px 0 var(--stroke-hi);
+    opacity:0; z-index:20;
+    transition:box-shadow .4s, background .4s;
+  }
+  body.live #plan-badge { animation:badge-drop .5s cubic-bezier(.34,1.56,.64,1) .35s forwards; }
+  @keyframes badge-drop { to{opacity:1;transform:translateX(-50%) translateY(0)} }
+  #plan-badge::before {
+    content:''; width:7px; height:7px; border-radius:50%; flex-shrink:0;
+    transition:background .35s, box-shadow .35s;
+  }
+  #plan-badge.nok::before { background:var(--nok); box-shadow:0 0 8px var(--nok-glow); animation:led-blink 1.2s steps(1) infinite; }
+  #plan-badge.ok::before  { background:var(--ok);  box-shadow:0 0 10px var(--ok-glow); }
+  #plan-badge.ok { box-shadow:0 0 0 1px rgba(48,209,88,.4), 0 8px 32px rgba(48,209,88,.2), inset 0 1px 0 var(--stroke-hi); }
+  @keyframes led-blink { 0%,55%{opacity:1} 56%,100%{opacity:.15} }
+
+  /* ── TOPBAR ── */
+  #topbar {
+    position:fixed; top:0; left:0; right:0; z-index:20;
+    padding: calc(10px + env(safe-area-inset-top)) 16px 0;
+    display:flex; align-items:flex-start; justify-content:space-between;
+    pointer-events:none;
+    opacity:0;
+  }
+  body.live #topbar { animation:slide-down .45s cubic-bezier(.4,0,.2,1) .1s forwards; }
+  @keyframes slide-down { to{opacity:1} }
+
+  .top-pill {
+    display:flex; align-items:center; gap:6px;
+    padding:7px 13px; border-radius:var(--r-pill);
+    font-family:var(--sf-text); font-size:12px; font-weight:500; letter-spacing:-.1px;
+    color:var(--ink); cursor:pointer; pointer-events:all;
+    background:var(--glass-2); backdrop-filter:blur(24px) saturate(2);
+    -webkit-backdrop-filter:blur(24px) saturate(2);
+    border:0.5px solid var(--stroke);
+    box-shadow:0 4px 16px rgba(0,0,0,.22), inset 0 1px 0 var(--stroke-hi);
+    transition:transform .15s cubic-bezier(.34,1.56,.64,1), background .2s;
+    white-space:nowrap;
+  }
+  .top-pill:active { transform:scale(.93); background:rgba(255,255,255,.28); }
+  .top-pill .lbl { font-size:10px; color:var(--ink-2); letter-spacing:.5px; text-transform:uppercase; }
+  .top-pill .val { color:var(--white); font-weight:600; }
+
+  #app-wordmark {
+    font-family:var(--sf); font-size:15px; font-weight:300; letter-spacing:3px;
+    color:var(--ink-2); text-transform:uppercase;
+    padding:7px 0; pointer-events:none;
+  }
+
+  /* ── MINIATURES ── */
+  #thumb-strip {
+    position:fixed; bottom:calc(24px + env(safe-area-inset-bottom));
+    left:0; right:132px; z-index:20;
+    display:flex; flex-direction:row; align-items:center; gap:8px;
+    padding:0 20px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;
+    pointer-events:all;
+    opacity:0;
+  }
+  body.live #thumb-strip { animation:slide-up .45s cubic-bezier(.4,0,.2,1) .18s forwards; }
+  #thumb-strip::-webkit-scrollbar { display:none; }
+  .thumb {
+    width:54px; height:54px; flex-shrink:0; border-radius:16px; object-fit:cover;
+    border:1.5px solid var(--stroke-hi); cursor:pointer;
+    box-shadow:0 4px 16px rgba(0,0,0,.4), 0 1px 0 rgba(255,255,255,.18) inset;
+    animation:thumb-in .4s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes thumb-in { 0%{transform:scale(0);opacity:0} 100%{transform:scale(1);opacity:1} }
+  #photo-count {
+    font-family:var(--mono); font-size:10px; color:var(--ink-3);
+    letter-spacing:1px; flex-shrink:0; white-space:nowrap;
+  }
+
+  /* ── BARRE DE CONTRÔLES ── */
+  #controls {
+    position:fixed; bottom:0; right:0; z-index:20;
+    padding-bottom:calc(24px + env(safe-area-inset-bottom));
+    padding-right:24px;
+    padding-top:10px;
+    display:flex; flex-direction:column; align-items:center; gap:10px;
+    pointer-events:all;
+    opacity:0;
+  }
+  body.live #controls { animation:slide-up .45s cubic-bezier(.4,0,.2,1) .15s forwards; }
+  @keyframes slide-up { to{opacity:1} }
+
+
+  /* ── DÉCLENCHEUR — verre liquide ── */
+  #shutter-wrap { position:relative; display:flex; align-items:center; justify-content:center; }
+
+  /* Anneau externe */
+  #shutter-ring {
+    width:82px; height:82px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    position:relative;
+    background:var(--glass-1);
+    backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+    border:1.5px solid var(--stroke);
+    box-shadow:0 0 0 0 transparent, 0 8px 24px rgba(0,0,0,.4), inset 0 1px 0 var(--stroke-hi);
+    transition:border-color .4s, box-shadow .4s;
+  }
+  /* Prêt : glow vert */
+  #shutter-ring.ready {
+    border-color:rgba(48,209,88,.6);
+    box-shadow:0 0 0 1px rgba(48,209,88,.35), 0 0 28px 6px rgba(48,209,88,.35), inset 0 1px 0 rgba(48,209,88,.3);
+  }
+  /* Pulse externe quand prêt */
+  #shutter-ring.ready::before {
+    content:''; position:absolute; inset:-9px; border-radius:50%;
+    border:1.5px solid rgba(48,209,88,.5);
+    animation:shutter-pulse 2s cubic-bezier(.4,0,.2,1) infinite;
+  }
+  @keyframes shutter-pulse {
+    0%   { transform:scale(1);    opacity:.7; }
+    70%  { transform:scale(1.35); opacity:0; }
+    100% { transform:scale(1.35); opacity:0; }
+  }
+
+  /* Bouton intérieur — disque givré */
+  #shutter-btn {
+    width:68px; height:68px; border-radius:50%;
+    background:radial-gradient(circle at 40% 35%,
+      rgba(255,255,255,.92) 0%,
+      rgba(240,240,242,.82) 50%,
+      rgba(220,222,226,.72) 100%);
+    backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+    border:1px solid rgba(255,255,255,.7);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.9) inset,
+      0 6px 20px rgba(0,0,0,.35),
+      0 1px 3px rgba(0,0,0,.2);
+    cursor:pointer; position:relative;
+    transition:transform .12s cubic-bezier(.34,1.56,.64,1), filter .2s, opacity .3s;
+  }
+  #shutter-btn:active { transform:scale(.86); filter:brightness(.95); }
+  #shutter-btn.locked {
+    background:radial-gradient(circle at 40% 35%, rgba(255,255,255,.28), rgba(255,255,255,.10));
+    border-color:rgba(255,255,255,.22);
+    box-shadow:0 4px 12px rgba(0,0,0,.3);
+    cursor:not-allowed;
+  }
+
+  /* Icône appareil photo dans le bouton */
+  #shutter-btn::before {
+    content:''; position:absolute; inset:0;
+    background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24' fill='none' stroke='rgba(0,0,0,0.4)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z'/%3E%3Ccircle cx='12' cy='13' r='4'/%3E%3C/svg%3E") center / 26px no-repeat;
+    transition:opacity .3s;
+  }
+  #shutter-btn.locked::before { opacity:.3; }
+
+  /* Compte à rebours */
+  #countdown-display {
+    position:absolute; font-family:var(--sf); font-size:28px; font-weight:200;
+    color:rgba(0,0,0,.75); pointer-events:none; opacity:0; transition:opacity .2s;
+    letter-spacing:-1px;
+  }
+  #countdown-display.show { opacity:1; }
+
+  /* Bouton annuler CD */
+  #cancel-cd-btn {
+    display:none;
+    font-family:var(--sf-text); font-size:13px; font-weight:400;
+    padding:8px 20px; border-radius:var(--r-pill);
+    border:0.5px solid var(--stroke);
+    background:var(--glass-2); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+    color:var(--ink); cursor:pointer;
+    box-shadow:0 4px 12px rgba(0,0,0,.2);
+  }
+  #cancel-cd-btn.show { display:block; }
+
+  /* ── FLASH ── */
+  #flash { position:fixed; inset:0; background:#fff; z-index:100; opacity:0; pointer-events:none; transition:opacity .08s; }
+  #flash.fire { opacity:1; }
+
+  /* ── VISIONNEUSE — sheet liquide ── */
+  #viewer {
+    position:fixed; inset:0; z-index:300;
+    display:none; flex-direction:column; align-items:center; justify-content:flex-end;
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  #viewer.open { display:flex; }
+  /* Backdrop flouté */
+  #viewer-backdrop {
+    position:absolute; inset:0;
+    background:rgba(0,0,0,.55);
+    backdrop-filter:blur(28px) saturate(1.4);
+    -webkit-backdrop-filter:blur(28px) saturate(1.4);
+    animation:bd-in .3s ease;
+  }
+  @keyframes bd-in { from{opacity:0} to{opacity:1} }
+
+  /* Sheet */
+  #viewer-sheet {
+    position:relative; z-index:1;
+    width:100%; max-width:480px;
+    background:rgba(28,28,30,.88);
+    backdrop-filter:blur(40px) saturate(1.8);
+    -webkit-backdrop-filter:blur(40px) saturate(1.8);
+    border:0.5px solid rgba(255,255,255,.16);
+    border-bottom:none;
+    border-radius:var(--r-card) var(--r-card) 0 0;
+    box-shadow:0 -20px 60px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.22);
+    padding:12px 20px 28px;
+    animation:sheet-up .42s cubic-bezier(.34,1.20,.64,1);
+  }
+  @keyframes sheet-up { from{transform:translateY(100%)} to{transform:translateY(0)} }
+
+  /* Poignée */
+  #viewer-handle {
+    width:36px; height:4px; border-radius:var(--r-pill);
+    background:rgba(255,255,255,.28); margin:0 auto 16px;
+  }
+
+  /* Aperçu */
+  #viewer-img {
+    width:100%; max-height:36vh; object-fit:contain; border-radius:18px;
+    border:0.5px solid rgba(255,255,255,.12);
+    box-shadow:0 8px 32px rgba(0,0,0,.5);
+    margin-bottom:14px;
+  }
+
+  /* Méta */
+  #viewer-meta {
+    font-family:var(--mono); font-size:11px; color:var(--ink-2);
+    text-align:center; letter-spacing:.3px; line-height:2;
+    margin-bottom:18px;
+  }
+
+  /* Boutons */
+  .viewer-btns { display:flex; gap:10px; }
+  .vbtn {
+    flex:1; padding:15px 10px; border-radius:18px; border:none;
+    font-family:var(--sf-text); font-size:15px; font-weight:500;
+    cursor:pointer; letter-spacing:-.1px;
+    transition:transform .15s cubic-bezier(.34,1.56,.64,1), filter .2s;
+  }
+  .vbtn:active { transform:scale(.95); }
+  #vbtn-download {
+    background:rgba(255,255,255,.92); color:#000;
+    box-shadow:0 2px 12px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.9);
+  }
+  #vbtn-delete {
+    background:rgba(255,69,58,.18); color:#FF453A;
+    border:0.5px solid rgba(255,69,58,.3);
+    box-shadow:inset 0 1px 0 rgba(255,100,90,.15);
+  }
+  #vbtn-close {
+    background:rgba(255,255,255,.1); color:var(--ink);
+    border:0.5px solid var(--stroke);
+    box-shadow:inset 0 1px 0 var(--stroke-hi);
+  }
+
+  /* ── ÉCRAN PERMISSION ── */
+  #perm-screen {
+    position:fixed; inset:0; z-index:200;
+    display:flex; flex-direction:column; align-items:center; justify-content:flex-end;
+    padding-bottom:calc(52px + env(safe-area-inset-bottom));
+  }
+  /* Arrière-plan: vidéo floue simulée avec gradient de profondeur */
+  #perm-bg {
+    position:absolute; inset:0;
+    background: linear-gradient(160deg, #1c2b3a 0%, #0d1117 50%, #0a0f14 100%);
+    z-index:0;
+  }
+  /* Icône flottante */
+  #perm-icon {
+    position:absolute; top:calc(14% + env(safe-area-inset-top));
+    left:50%; transform:translateX(-50%);
+    z-index:1;
+    display:flex; flex-direction:column; align-items:center; gap:24px;
+  }
+  #perm-logo {
+    width:88px; height:88px; border-radius:26px;
+    background:var(--glass-2); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+    border:0.5px solid var(--stroke);
+    box-shadow:0 20px 60px rgba(0,0,0,.4), inset 0 1px 0 var(--stroke-hi);
+    display:flex; align-items:center; justify-content:center;
+    animation:float 3.5s ease-in-out infinite;
+  }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+  #perm-wordmark {
+    font-family:var(--sf); font-size:28px; font-weight:200; letter-spacing:6px;
+    color:var(--ink); text-transform:uppercase; text-align:center;
+  }
+  #perm-wordmark b { font-weight:600; }
+  #perm-subtitle {
+    font-family:var(--sf-text); font-size:14px; font-weight:400; line-height:1.7;
+    color:var(--ink-2); text-align:center; max-width:300px;
+  }
+  /* Card verre permission */
+  #perm-card {
+    position:relative; z-index:1; width:calc(100% - 32px); max-width:400px;
+    background:rgba(28,28,30,.82);
+    backdrop-filter:blur(40px) saturate(1.8); -webkit-backdrop-filter:blur(40px) saturate(1.8);
+    border:0.5px solid rgba(255,255,255,.16);
+    border-radius:var(--r-card);
+    box-shadow:0 20px 60px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.18);
+    padding:24px 20px 20px; display:flex; flex-direction:column; gap:16px;
+  }
+  .perm-row {
+    display:flex; align-items:center; gap:14px;
+    padding:4px 0;
+  }
+  .perm-row + .perm-row { border-top:0.5px solid rgba(255,255,255,.07); padding-top:14px; }
+  .perm-ico {
+    width:40px; height:40px; border-radius:12px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:18px;
+    background:var(--glass-2); border:0.5px solid var(--stroke);
+    box-shadow:inset 0 1px 0 var(--stroke-hi);
+  }
+  .perm-text-wrap { display:flex; flex-direction:column; gap:2px; }
+  .perm-title { font-family:var(--sf-text); font-size:15px; font-weight:500; color:var(--ink); }
+  .perm-desc  { font-family:var(--sf-text); font-size:13px; color:var(--ink-2); line-height:1.5; }
+  #perm-btn {
+    width:100%; padding:16px; border-radius:var(--r-btn); border:none;
+    background:rgba(255,255,255,.95); color:#000;
+    font-family:var(--sf-text); font-size:17px; font-weight:600; letter-spacing:-.2px;
+    cursor:pointer;
+    box-shadow:0 6px 24px rgba(0,0,0,.3), inset 0 1px 0 #fff;
+    transition:transform .15s cubic-bezier(.34,1.56,.64,1), filter .2s;
+  }
+  #perm-btn:active { transform:scale(.97); filter:brightness(.95); }
+
+  /* ── TOAST ── */
+  #toast {
+    position:fixed; bottom:calc(150px + env(safe-area-inset-bottom));
+    left:50%; z-index:50; pointer-events:none; white-space:nowrap;
+    font-family:var(--sf-text); font-size:13px; font-weight:500; letter-spacing:-.1px;
+    padding:10px 18px; border-radius:var(--r-pill);
+    background:rgba(28,28,30,.9); color:var(--ink);
+    backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+    border:0.5px solid var(--stroke);
+    transform:translateX(-50%) translateY(12px) scale(.94); opacity:0;
+    transition:opacity .28s cubic-bezier(.4,0,.2,1), transform .28s cubic-bezier(.34,1.56,.64,1);
+    box-shadow:0 8px 28px rgba(0,0,0,.35), inset 0 1px 0 var(--stroke-hi);
+  }
+  #toast.show { opacity:1; transform:translateX(-50%) translateY(0) scale(1); }
+  #toast.err  { background:rgba(255,69,58,.88); }
+
+
+  /* ── BOUTON SETTINGS ── */
+  #settings-btn {
+    position:fixed; top:calc(10px + env(safe-area-inset-top)); right:16px;
+    z-index:25; pointer-events:all;
+    width:36px; height:36px; border-radius:50%; border:none; cursor:pointer;
+    background:var(--glass-2); backdrop-filter:blur(24px) saturate(2);
+    -webkit-backdrop-filter:blur(24px) saturate(2);
+    border:0.5px solid var(--stroke);
+    box-shadow:0 4px 16px rgba(0,0,0,.22), inset 0 1px 0 var(--stroke-hi);
+    display:flex; align-items:center; justify-content:center;
+    font-size:16px;
+    transition:transform .2s cubic-bezier(.34,1.56,.64,1), background .2s;
+    opacity:0;
+  }
+  body.live #settings-btn { animation:slide-down .45s cubic-bezier(.4,0,.2,1) .1s forwards; }
+  #settings-btn:active { transform:scale(.88); background:rgba(255,255,255,.28); }
+  #settings-btn.open { transform:rotate(45deg); }
+
+  /* ── PANNEAU SETTINGS ── */
+  #settings-panel {
+    position:fixed; top:calc(54px + env(safe-area-inset-top)); right:12px;
+    z-index:24; width:260px;
+    background:rgba(22,22,24,.92);
+    backdrop-filter:blur(40px) saturate(1.8);
+    -webkit-backdrop-filter:blur(40px) saturate(1.8);
+    border:0.5px solid rgba(255,255,255,.16);
+    border-radius:22px;
+    box-shadow:0 20px 60px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.18);
+    padding:6px 0;
+    transform-origin:top right;
+    transform:scale(.85); opacity:0;
+    pointer-events:none;
+    transition:transform .25s cubic-bezier(.34,1.56,.64,1), opacity .2s;
+  }
+  #settings-panel.open {
+    transform:scale(1); opacity:1;
+    pointer-events:all;
+  }
+
+  .s-section-label {
+    font-family:var(--mono); font-size:9px; font-weight:600; letter-spacing:1.8px;
+    text-transform:uppercase; color:var(--ink-3);
+    padding:10px 16px 4px;
+  }
+  .s-row {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:11px 16px;
+    border-top:0.5px solid rgba(255,255,255,.06);
+    cursor:pointer;
+    transition:background .15s;
+  }
+  .s-row:first-of-type { border-top:none; }
+  .s-row:active { background:rgba(255,255,255,.06); }
+  .s-row-left { display:flex; align-items:center; gap:10px; }
+  .s-icon { font-size:15px; width:20px; text-align:center; }
+  .s-label {
+    font-family:var(--sf-text); font-size:14px; font-weight:400;
+    color:var(--ink); letter-spacing:-.1px;
+  }
+
+  /* Toggle iOS natif */
+  .s-toggle {
+    width:42px; height:26px; border-radius:13px; position:relative;
+    border:none; cursor:pointer; padding:0; flex-shrink:0;
+    background:rgba(255,255,255,.18);
+    transition:background .25s;
+  }
+  .s-toggle::after {
+    content:''; position:absolute;
+    width:22px; height:22px; border-radius:11px; top:2px; left:2px;
+    background:#fff;
+    box-shadow:0 2px 6px rgba(0,0,0,.35);
+    transition:transform .25s cubic-bezier(.34,1.56,.64,1);
+  }
+  .s-toggle.on { background:var(--ok); }
+  .s-toggle.on::after { transform:translateX(16px); }
+
+  /* Sélecteur segmenté pour qualité et tolérance */
+  .s-segment {
+    display:flex; gap:2px;
+    background:rgba(255,255,255,.08); border-radius:8px; padding:2px;
+  }
+  .s-seg-btn {
+    flex:1; padding:5px 6px; border:none; border-radius:6px; cursor:pointer;
+    font-family:var(--mono); font-size:10px; font-weight:600; letter-spacing:.5px;
+    color:var(--ink-2); background:transparent;
+    transition:background .2s, color .2s;
+    white-space:nowrap;
+  }
+  .s-seg-btn.active {
+    background:rgba(255,255,255,.22); color:var(--white);
+    box-shadow:0 1px 4px rgba(0,0,0,.3);
+  }
+
+  .s-row-col {
+    display:flex; flex-direction:column; gap:8px;
+    padding:10px 16px 12px;
+    border-top:0.5px solid rgba(255,255,255,.06);
+  }
+  .s-row-col .s-label { font-family:var(--sf-text); font-size:13px; color:var(--ink-2); }
+
+  /* Séparateur */
+  .s-sep { height:0.5px; background:rgba(255,255,255,.08); margin:2px 0; }
+
+
+
+  /* ── SPLASH SCREEN ── */
+  #splash {
+    position:fixed; inset:0; z-index:500;
+    background:#000;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:0;
+    pointer-events:none;
+  }
+  #splash.done {
+    animation:splash-out .6s cubic-bezier(.4,0,1,1) forwards;
+  }
+  @keyframes splash-out {
+    0%   { opacity:1; transform:scale(1); }
+    100% { opacity:0; transform:scale(1.06); }
+  }
+
+  /* Réticule animé */
+  #splash-reticle {
+    position:relative; width:90px; height:90px; margin-bottom:28px;
+  }
+  #splash-reticle svg {
+    position:absolute; inset:0;
+    animation:splash-reticle-spin 2s linear infinite;
+  }
+  @keyframes splash-reticle-spin { to { transform:rotate(360deg); } }
+  #splash-reticle .sr-dot {
+    position:absolute; top:50%; left:50%;
+    width:12px; height:12px; border-radius:50%;
+    transform:translate(-50%,-50%);
+    background:var(--ok);
+    box-shadow:0 0 16px 4px var(--ok-glow);
+    animation:splash-dot-pulse 1s ease-in-out infinite;
+  }
+  @keyframes splash-dot-pulse {
+    0%,100%{transform:translate(-50%,-50%) scale(1);  opacity:1;}
+    50%    {transform:translate(-50%,-50%) scale(1.5); opacity:.7;}
+  }
+  /* Lignes de scan */
+  #splash-scan {
+    position:absolute; inset:0; overflow:hidden; border-radius:4px;
+  }
+  #splash-scan::after {
+    content:''; position:absolute; left:0; right:0; height:2px;
+    background:linear-gradient(to right, transparent, var(--ok), transparent);
+    animation:splash-scan-line 1.8s ease-in-out infinite;
+    top:0;
+  }
+  @keyframes splash-scan-line { 0%{top:0;opacity:0} 20%{opacity:1} 80%{opacity:1} 100%{top:100%;opacity:0} }
+
+  #splash-brand {
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    animation:splash-brand-in .8s cubic-bezier(.34,1.2,.64,1) .3s both;
+  }
+  @keyframes splash-brand-in {
+    0%   { opacity:0; transform:translateY(16px) scale(.95); }
+    100% { opacity:1; transform:translateY(0) scale(1); }
+  }
+  #splash-title {
+    font-family:var(--sf); font-size:11px; font-weight:300; letter-spacing:6px;
+    color:rgba(255,255,255,.4); text-transform:uppercase;
+  }
+  #splash-name {
+    font-family:var(--sf); font-size:30px; font-weight:700; letter-spacing:1px;
+    color:#fff; text-align:center; line-height:1.1;
+  }
+  #splash-name span { color:var(--ok); font-weight:300; }
+  #splash-sub {
+    margin-top:6px;
+    font-family:var(--mono); font-size:10px; letter-spacing:2px;
+    color:rgba(255,255,255,.3); text-transform:uppercase;
+  }
+  #splash-bar-wrap {
+    margin-top:40px; width:120px; height:2px;
+    background:rgba(255,255,255,.1); border-radius:1px; overflow:hidden;
+    animation:splash-brand-in .6s cubic-bezier(.34,1.2,.64,1) .5s both;
+  }
+  #splash-bar {
+    height:100%; width:0%; background:var(--ok);
+    border-radius:1px; transition:width .05s linear;
+  }
+
+  /* ── FALLBACK SAFE AREA pour Android sans support env() ── */
+  @supports not (padding: env(safe-area-inset-top)) {
+    #topbar      { padding-top: 14px !important; }
+    #settings-btn{ top: 14px !important; }
+    #settings-panel { top: 58px !important; }
+    #plan-badge  { top: 18px !important; }
+    #c-tl, #c-tr { top: 80px !important; }
+    #c-bl, #c-br { bottom: 144px !important; }
+    #thumb-strip { bottom: 24px !important; }
+    #controls    { padding-bottom: 24px !important; }
+    #toast       { bottom: 150px !important; }
+    #viewer      { padding-bottom: 0 !important; }
+    #perm-screen { padding-bottom: 52px !important; }
+    #perm-icon   { top: 14% !important; }
+  }
+
+  /* ── FALLBACK backdrop-filter pour Android < Chrome 76 ── */
+  @supports not (backdrop-filter: blur(1px)) {
+    .top-pill, #settings-btn, #settings-panel,
+    #plan-badge, #band-h-label, #band-v-label,
+    #viewer-sheet, #viewer-backdrop,
+    #perm-logo, #perm-card, #cancel-cd-btn, #toast {
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+    .top-pill        { background: rgba(20,20,22,.88) !important; }
+    #settings-btn    { background: rgba(20,20,22,.88) !important; }
+    #settings-panel  { background: rgba(18,18,20,.97) !important; }
+    #plan-badge      { background: rgba(18,18,20,.88) !important; }
+    #band-h-label, #band-v-label { background: rgba(10,10,12,.85) !important; }
+    #viewer-sheet    { background: rgba(16,16,18,.98) !important; }
+    #viewer-backdrop { background: rgba(0,0,0,.75) !important; }
+    #perm-card       { background: rgba(18,18,20,.98) !important; }
+    #toast           { background: rgba(18,18,20,.95) !important; }
+    #cancel-cd-btn   { background: rgba(18,18,20,.88) !important; }
+    #shutter-ring    { background: rgba(255,255,255,.12) !important; }
+  }
+
+  @media (prefers-reduced-motion:reduce) { *{ animation-duration:.001s!important; transition-duration:.001s!important; } }
+</style>
+</head>
+<body>
+
+<!-- ── PERMISSION ── -->
+
+<!-- ── SPLASH SCREEN ── -->
+<div id="splash" style="display:none">
+  <div id="splash-reticle">
+    <div id="splash-scan"></div>
+    <svg viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Anneau externe tournant -->
+      <circle cx="45" cy="45" r="40" stroke="rgba(255,255,255,.08)" stroke-width="1"/>
+      <path d="M45 5 A40 40 0 0 1 85 45" stroke="rgba(48,209,88,.8)" stroke-width="1.5" stroke-linecap="round"/>
+      <!-- Segments de cadrage -->
+      <line x1="5"  y1="45" x2="20" y2="45" stroke="rgba(255,255,255,.25)" stroke-width="1"/>
+      <line x1="70" y1="45" x2="85" y2="45" stroke="rgba(255,255,255,.25)" stroke-width="1"/>
+      <line x1="45" y1="5"  x2="45" y2="20" stroke="rgba(255,255,255,.25)" stroke-width="1"/>
+      <line x1="45" y1="70" x2="45" y2="85" stroke="rgba(255,255,255,.25)" stroke-width="1"/>
+      <!-- Coins internes -->
+      <path d="M18 28 L18 18 L28 18" stroke="rgba(255,255,255,.5)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M62 18 L72 18 L72 28" stroke="rgba(255,255,255,.5)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M18 62 L18 72 L28 72" stroke="rgba(255,255,255,.5)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M72 62 L72 72 L62 72" stroke="rgba(255,255,255,.5)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div class="sr-dot"></div>
+  </div>
+  <div id="splash-brand">
+    <div id="splash-title">Precision Camera Tool</div>
+    <div id="splash-name">CALIPER <span>Pro</span> CAM</div>
+    <div id="splash-sub">Level · Measure · Capture</div>
+  </div>
+  <div id="splash-bar-wrap"><div id="splash-bar"></div></div>
+</div>
+
+<div id="perm-screen">
+  <div id="perm-bg"></div>
+  <div id="perm-icon">
+    <div id="perm-logo">
+      <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+        <rect x="4" y="14" width="36" height="24" rx="6" stroke="rgba(255,255,255,.7)" stroke-width="1.5"/>
+        <path d="M14 14l2.5-4h11l2.5 4" stroke="rgba(255,255,255,.7)" stroke-width="1.5" stroke-linejoin="round"/>
+        <circle cx="22" cy="26" r="6.5" stroke="rgba(255,255,255,.7)" stroke-width="1.5"/>
+        <circle cx="22" cy="26" r="3" fill="rgba(255,255,255,.4)"/>
+        <circle cx="34" cy="18" r="1.5" fill="rgba(255,255,255,.5)"/>
+      </svg>
+    </div>
+    <div id="perm-wordmark">CALIPER <b>Pro CAM</b></div>
+    <div id="perm-subtitle">Photographie de précision avec niveau 2 axes en temps réel</div>
+  </div>
+  <div id="perm-card">
+    <div class="perm-row">
+      <div class="perm-ico">📷</div>
+      <div class="perm-text-wrap">
+        <div class="perm-title">Caméra</div>
+        <div class="perm-desc">Pour prendre les photos à pleine résolution</div>
+      </div>
+    </div>
+    <div class="perm-row">
+      <div class="perm-ico">⬛</div>
+      <div class="perm-text-wrap">
+        <div class="perm-title">Capteur de mouvement</div>
+        <div class="perm-desc">Pour les niveaux horizontal et vertical en temps réel</div>
+      </div>
+    </div>
+    <button id="perm-btn" onclick="initCamera()">Activer</button>
+  </div>
+</div>
+
+<!-- ── VIDÉO ── -->
+<video id="video" autoplay playsinline muted></video>
+<div id="vignette"></div>
+<div id="flash"></div>
+
+<!-- ── BANDES NIVEAU ── -->
+<div id="band-h" class="nok"></div>
+<div id="band-v" class="nok"></div>
+<div id="band-h-label" class="nok">Roulis</div>
+<div id="band-v-label" class="nok">Inclinaison</div>
+
+<!-- ── FLÈCHES ── -->
+<svg id="arrow-h" class="band-arrow" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+  <polygon id="arrow-h-poly" points="3,14 22,3 22,25" fill="white"
+    filter="drop-shadow(0 2px 6px rgba(0,0,0,.9))"/>
+</svg>
+<svg id="arrow-v" class="band-arrow" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+  <polygon id="arrow-v-poly" points="14,3 25,22 3,22" fill="white"
+    filter="drop-shadow(0 2px 6px rgba(0,0,0,.9))"/>
+</svg>
+
+<!-- ── GRILLE ── -->
+<div class="gl gl-v" id="gl1"></div>
+<div class="gl gl-v" id="gl2"></div>
+<div class="gl gl-h" id="gl3"></div>
+<div class="gl gl-h" id="gl4"></div>
+
+
+
+<!-- ── BADGE STATUT ── -->
+<div id="plan-badge" class="nok">Ajustez le téléphone</div>
+
+
+<!-- ── BOUTON SETTINGS ── -->
+<button id="settings-btn" onclick="toggleSettings()">⚙</button>
+
+<!-- ── PANNEAU SETTINGS ── -->
+<div id="settings-panel">
+  <div class="s-section-label">Affichage</div>
+  <div class="s-row" onclick="toggleHUD('grille')">
+    <div class="s-row-left"><span class="s-icon">⊞</span><span class="s-label">Quadrillage</span></div>
+    <button class="s-toggle on" id="tog-grille"></button>
+  </div>
+    <button class="s-toggle on" id="tog-reticule"></button>
+  </div>
+    <button class="s-toggle on" id="tog-coins"></button>
+  </div>
+  <div class="s-row" onclick="toggleHUD('bandes')">
+    <div class="s-row-left"><span class="s-icon">▌</span><span class="s-label">Bandes de niveau</span></div>
+    <button class="s-toggle on" id="tog-bandes"></button>
+  </div>
+  <div class="s-row" onclick="toggleHUD('badge')">
+    <div class="s-row-left"><span class="s-icon">●</span><span class="s-label">Badge statut</span></div>
+    <button class="s-toggle on" id="tog-badge" class="s-toggle"></button>
+  </div>
+  <div class="s-row" onclick="toggleHUD('wordmark')">
+    <div class="s-row-left"><span class="s-icon">Ａ</span><span class="s-label">Nom de l'app</span></div>
+    <button class="s-toggle on" id="tog-wordmark" class="s-toggle"></button>
+  </div>
+  <div class="s-sep"></div>
+  <div class="s-section-label">Qualité photo</div>
+  <div class="s-row-col">
+    <div class="s-segment" id="seg-qual">
+      <button class="s-seg-btn active" onclick="setQual(0)">MAX</button>
+      <button class="s-seg-btn" onclick="setQual(1)">HAUTE</button>
+      <button class="s-seg-btn" onclick="setQual(2)">STD</button>
+      <button class="s-seg-btn" onclick="setQual(3)">LÉGÈRE</button>
+    </div>
+  </div>
+  <div class="s-sep"></div>
+  <div class="s-section-label">Tolérance niveau</div>
+  <div class="s-row-col">
+    <div class="s-segment" id="seg-tol">
+      <button class="s-seg-btn active" onclick="setTol(0)">±0.5°</button>
+      <button class="s-seg-btn" onclick="setTol(1)">±1.0°</button>
+      <button class="s-seg-btn" onclick="setTol(2)">±1.5°</button>
+      <button class="s-seg-btn" onclick="setTol(3)">±2.5°</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── TOPBAR ── -->
+<div id="topbar">
+  <div id="app-wordmark">CALIPER Pro CAM</div>
+
+</div>
+
+<!-- ── MINIATURES ── -->
+<div id="thumb-strip"><div id="photo-count"></div></div>
+
+<!-- ── CONTRÔLES ── -->
+<div id="controls">
+  <div id="shutter-wrap">
+    <div id="shutter-ring">
+      <button id="shutter-btn" class="locked" onclick="handleShutter()"></button>
+      <div id="countdown-display"></div>
+    </div>
+  </div>
+  <button id="cancel-cd-btn" onclick="cancelCountdown()">Annuler</button>
+</div>
+
+<!-- ── VISIONNEUSE ── -->
+<div id="viewer">
+  <div id="viewer-backdrop" onclick="closeViewer()"></div>
+  <div id="viewer-sheet">
+    <div id="viewer-handle"></div>
+    <img id="viewer-img" src="" alt="">
+    <div id="viewer-meta" class="viewer-meta"></div>
+    <div class="viewer-btns">
+      <button class="vbtn" id="vbtn-download" onclick="downloadCurrent()">Enregistrer</button>
+      <button class="vbtn" id="vbtn-delete" onclick="deleteCurrent()">Supprimer</button>
+      <button class="vbtn" id="vbtn-close" onclick="closeViewer()">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── TOAST ── -->
+<div id="toast"></div>
+
+
+<script>
+
+// ── SPLASH ANIMATION — déclenché après permissions ───────────────────
+function showSplash() {
+  const bar    = document.getElementById('splash-bar');
+  const splash = document.getElementById('splash');
+  splash.style.display = 'flex';
+  bar.style.width = '0%';
+
+  // Durée totale : 2 secondes
+  const DURATION = 2000;
+  const STEP_MS  = 60;
+  const steps    = DURATION / STEP_MS;
+  let   step     = 0;
+
+  const iv = setInterval(() => {
+    step++;
+    // Progression easing : rapide au début, ralentit à la fin
+    const pct = Math.min(100, Math.round((1 - Math.pow(1 - step/steps, 2)) * 100));
+    bar.style.width = pct + '%';
+    if (step >= steps) {
+      clearInterval(iv);
+      bar.style.width = '100%';
+      setTimeout(() => {
+        splash.classList.add('done');
+        setTimeout(() => { splash.style.display = 'none'; }, 650);
+      }, 200);
+    }
+  }, STEP_MS);
+}
+
+// ── CONFIG ──────────────────────────────────────────────────────
+const TOLERANCES = [0.5, 1.0, 1.5, 2.5];
+let tolIdx = 0; // défaut ±0.5°
+const currentTol = () => TOLERANCES[tolIdx];
+
+// Qualité JPEG : presets avec label, valeur, et estimation de taille
+const QUALITY_PRESETS = [
+  { label: 'MAX',       val: 1.00, est: '~7 Mo' },
+  { label: 'HAUTE',     val: 0.92, est: '~3 Mo' },
+  { label: 'STANDARD',  val: 0.85, est: '~2 Mo' },
+  { label: 'LÉGÈRE',    val: 0.72, est: '~1 Mo' },
+];
+let qualIdx = 0; // défaut MAX (1.0)
+const currentQual = () => QUALITY_PRESETS[qualIdx];
+
+// Stabilisation : nb de lectures consécutives dans la tolérance avant de valider
+const STABLE_FRAMES = 12; // ~600ms à 20Hz
+
+// ── STATE ───────────────────────────────────────────────────────
+let roll  = 0;
+let pitch = 0;
+let stream = null;
+let photos = [];
+let viewerIdx = -1;
+let sensorAvail = false;
+let gyroGranted = false;
+let stableCount = 0;      // frames stables consécutives
+let wasStable = false;    // état précédent
+let cdTimer = null;       // setInterval du compte à rebours
+let cdValue = 0;          // secondes restantes
+let cdRunning = false;
+
+// ── CAMERA ──────────────────────────────────────────────────────
+async function initCamera() {
+  const btn = document.getElementById('perm-btn');
+  btn.disabled = true;
+  btn.textContent = 'Autorisations…';
+
+  // 1) GYROSCOPE d'abord — doit être demandé dans le geste utilisateur (tap).
+  //    On le fait avant la caméra pour rester dans le contexte du tap sur iOS.
+  await requestGyro();
+
+  // 2) CAMÉRA — qualité maximale
+  // Contraintes progressives : on tente la résolution max, fallback si refusé
+  const constraintsList = [
+    { video: { facingMode: { ideal: 'environment' }, width: { ideal: 4032 }, height: { ideal: 3024 }, frameRate: { ideal: 60 } } },
+    { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } } },
+    { video: { facingMode: 'environment' } },
+    { video: true }, // dernier recours — n'importe quelle caméra
+  ];
+  let stream_candidate = null;
+  for (const c of constraintsList) {
+    try { stream_candidate = await navigator.mediaDevices.getUserMedia(c); break; }
+    catch(e) { /* essayer suivant */ }
+  }
+  stream = stream_candidate;
+  if (!stream) { throw new Error('Aucune caméra disponible'); }
+  try {
+    const video = document.getElementById('video');
+    video.srcObject = stream;
+    await video.play();
+
+    // Tout est prêt → splash 2s puis HUD
+    document.getElementById('perm-screen').style.display = 'none';
+    showSplash();
+    // Après les 2s de splash + 0.65s de fondu → révéler le HUD
+    setTimeout(() => {
+      document.body.classList.add('live');
+      setTimeout(initHUDDefaults, 600);
+    }, 2000 + 650);
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = 'Réessayer';
+    alert('Accès caméra refusé ou indisponible.\n\n' + e.message +
+          '\n\nSur iOS : ouvre dans Safari.\nSur Android : ouvre dans Chrome et autorise la caméra.');
+  }
+}
+
+// ── GYROSCOPE ───────────────────────────────────────────────────
+async function requestGyro() {
+  if (typeof DeviceOrientationEvent === 'undefined') {
+    // Navigateur desktop ou appareil sans gyro
+    listenOrientation();
+    return;
+  }
+  // iOS 13+ : nécessite requestPermission() explicite
+  if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+    try {
+      const r = await DeviceOrientationEvent.requestPermission();
+      if (r === 'granted') gyroGranted = true;
+      else {
+        // Permission refusée sur iOS — on continue sans gyro
+        document.getElementById('plan-badge').textContent = 'Capteur refusé — niveaux inactifs';
+      }
+    } catch(e) { /* silencieux */ }
+  } else {
+    // Android / autres : pas de requestPermission, accès direct
+    gyroGranted = true;
+  }
+  listenOrientation();
+  // Android : parfois le premier événement met 500ms à arriver
+  setTimeout(() => {
+    if (!sensorAvail) {
+      // Dernier recours : tenter devicemotion aussi
+      window.addEventListener('devicemotion', () => { sensorAvail = true; }, { once: true });
+    }
+  }, 1500);
+}
+function listenOrientation() {
+  window.addEventListener('deviceorientation', e => {
+    sensorAvail = true;
+    roll  = e.gamma ?? 0;
+    pitch = e.beta  ?? 0;
+    updateLevels();
+  }, true);
+}
+
+// ── NIVEAUX + STABILISATION ──────────────────────────────────────
+function updateLevels() {
+  const tol = currentTol();
+  const rollOk  = Math.abs(roll)  <= tol;
+  const pitchOk = Math.abs(pitch) <= tol;
+  const allOk   = rollOk && pitchOk && sensorAvail;
+
+  // ── Bandes ──
+  document.getElementById('band-h').className = rollOk  ? 'ok' : 'nok';
+  document.getElementById('band-v').className = pitchOk ? 'ok' : 'nok';
+  document.getElementById('band-h-label').textContent =
+    rollOk  ? `ROULIS ✓ ${roll.toFixed(1)}°`  : `ROULIS ${roll.toFixed(1)}°`;
+  document.getElementById('band-v-label').textContent =
+    pitchOk ? `INCL. ✓ ${pitch.toFixed(1)}°` : `INCL. ${pitch.toFixed(1)}°`;
+  document.getElementById('band-h-label').className = rollOk  ? 'ok' : 'nok';
+  document.getElementById('band-v-label').className = pitchOk ? 'ok' : 'nok';
+
+  // ── Flèche ROULIS (bande basse) — pointe gauche ou droite ──
+  // roulis = rotation G/D → flèche ← ou → indique de quel côté relever
+  const arrowH     = document.getElementById('arrow-h');
+  const arrowHPoly = document.getElementById('arrow-h-poly');
+  if (rollOk) {
+    arrowH.classList.remove('show', 'dir-left', 'dir-right');
+  } else {
+    arrowH.classList.add('show');
+    if (roll > 0) {
+      // Téléphone penche à droite → pointer vers la droite (relever le côté droit)
+      arrowH.classList.remove('dir-left'); arrowH.classList.add('dir-right');
+      arrowHPoly.setAttribute('points', '25,14 6,3 6,25');  // →
+    } else {
+      // Téléphone penche à gauche → pointer vers la gauche
+      arrowH.classList.remove('dir-right'); arrowH.classList.add('dir-left');
+      arrowHPoly.setAttribute('points', '3,14 22,3 22,25'); // ←
+    }
+  }
+
+  // ── Flèche INCLINAISON (bande gauche) — pointe haut ou bas ──
+  // inclinaison = avant/arrière → flèche ↑ ou ↓ indique sens de correction
+  const arrowV     = document.getElementById('arrow-v');
+  const arrowVPoly = document.getElementById('arrow-v-poly');
+  if (pitchOk) {
+    arrowV.classList.remove('show', 'dir-up', 'dir-down');
+  } else {
+    arrowV.classList.add('show');
+    if (pitch > 0) {
+      // Avant trop bas → remonter le haut du téléphone → flèche ↑
+      arrowV.classList.remove('dir-down'); arrowV.classList.add('dir-up');
+      arrowVPoly.setAttribute('points', '14,3 25,22 3,22'); // ↑
+    } else {
+      // Avant trop haut → descendre → flèche ↓
+      arrowV.classList.remove('dir-up'); arrowV.classList.add('dir-down');
+      arrowVPoly.setAttribute('points', '14,25 25,6 3,6');  // ↓
+    }
+  }
+
+  // ── Badge ──
+  const badge = document.getElementById('plan-badge');
+  if (allOk) {
+    badge.className = 'ok';
+    badge.textContent = '✓ PARFAITEMENT PLAN';
+  } else {
+    badge.className = 'nok';
+    const parts = [];
+    if (!rollOk)  parts.push(`roulis ${roll.toFixed(1)}°`);
+    if (!pitchOk) parts.push(`incl. ${pitch.toFixed(1)}°`);
+    badge.textContent = sensorAvail ? parts.join('  ·  ') : 'Capteur non disponible';
+    if (!sensorAvail) {
+      document.getElementById('band-h').className = 'nok';
+      document.getElementById('band-v').className = 'nok';
+    }
+  }
+
+  // ── Stabilisation gyro ──
+  if (allOk) {
+    stableCount = Math.min(stableCount + 1, STABLE_FRAMES);
+  } else {
+    stableCount = 0;
+    // Si on bouge alors qu'un CD tourne → annuler
+    if (cdRunning) cancelCountdown();
+  }
+  const isStable = stableCount >= STABLE_FRAMES;
+
+  // ── Déclencheur : verrouillé / prêt ──
+  const btn  = document.getElementById('shutter-btn');
+  const ring = document.getElementById('shutter-ring');
+  if (isStable) {
+    btn.classList.remove('locked');
+    ring.classList.add('ready');
+
+  } else {
+    btn.classList.add('locked');
+    ring.classList.remove('ready');
+  }
+  wasStable = isStable;
+}
+
+// ── COMPTE À REBOURS ─────────────────────────────────────────────
+function startCountdown() {
+  cdRunning = true;
+  cdValue = 2;
+  const display = document.getElementById('countdown-display');
+  const cancelBtn = document.getElementById('cancel-cd-btn');
+  display.textContent = cdValue;
+  display.classList.add('show');
+  cancelBtn.classList.add('show');
+  vibrate([20]);
+
+  cdTimer = setInterval(() => {
+    cdValue--;
+    if (cdValue <= 0) {
+      clearInterval(cdTimer);
+      cdTimer = null;
+      display.classList.remove('show');
+      cancelBtn.classList.remove('show');
+      cdRunning = false;
+      takePhoto();
+    } else {
+      display.textContent = cdValue;
+      vibrate([20]);
+    }
+  }, 1000);
+}
+
+function cancelCountdown() {
+  if (cdTimer) { clearInterval(cdTimer); cdTimer = null; }
+  cdRunning = false;
+  document.getElementById('countdown-display').classList.remove('show');
+  document.getElementById('cancel-cd-btn').classList.remove('show');
+}
+
+// ── DÉCLENCHEUR MANUEL ───────────────────────────────────────────
+function handleShutter() {
+  const btn = document.getElementById('shutter-btn');
+  if (btn.classList.contains('locked')) return; // plan pas atteint
+  takePhoto();
+}
+
+// ── CAPTURE ──────────────────────────────────────────────────────
+async function takePhoto() {
+  const video = document.getElementById('video');
+  if (!video.srcObject) return;
+
+  const w = video.videoWidth  || 4032;
+  const h = video.videoHeight || 3024;
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  canvas.getContext('2d').drawImage(video, 0, 0, w, h);
+
+  const q = currentQual();
+  const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', q.val));
+  const dataUrl = URL.createObjectURL(blob);
+  const ts = new Date();
+  const fileName = `piece_${ts.toISOString().replace(/[:.]/g,'-')}.jpg`;
+
+  const sizeMB = (blob.size / 1048576).toFixed(1);
+  photos.push({ dataUrl, blob, fileName, roll: roll.toFixed(2), pitch: pitch.toFixed(2), ts, w, h, sizeMB });
+
+  flashEffect();
+  vibrate([40, 30, 40]);
+
+  const idx = photos.length - 1;
+  addThumb(idx);
+
+  // Ouvrir directement la visionneuse pour enregistrer / nommer la photo
+  openViewer(idx);
+}
+
+function flashEffect() {
+  const fl = document.getElementById('flash');
+  fl.classList.add('fire');
+  setTimeout(() => fl.classList.remove('fire'), 120);
+}
+function vibrate(pattern = [40]) {
+  if (navigator.vibrate) navigator.vibrate(pattern);
+}
+
+// ── MINIATURES ───────────────────────────────────────────────────
+function addThumb(idx) {
+  const strip = document.getElementById('thumb-strip');
+  const img = document.createElement('img');
+  img.src = photos[idx].dataUrl;
+  img.className = 'thumb';
+  img.onclick = () => openViewer(idx);
+  const count = document.getElementById('photo-count');
+  strip.insertBefore(img, count);
+  count.textContent = photos.length + ' ph.';
+  // Scroller jusqu'à la nouvelle miniature
+  strip.scrollLeft = 0;
+}
+
+// ── VISIONNEUSE ──────────────────────────────────────────────────
+function openViewer(idx) {
+  viewerIdx = idx;
+  const p = photos[idx];
+  document.getElementById('viewer-img').src = p.dataUrl;
+  document.getElementById('viewer-meta').innerHTML =
+    `${p.w} × ${p.h} px · ${p.sizeMB} Mo<br>` +
+    `Roulis : ${p.roll}°  ·  Incl. : ${p.pitch}°<br>` +
+    `${p.ts.toLocaleString('fr-FR')}`;
+  document.getElementById('viewer').classList.add('open');
+}
+function closeViewer() {
+  document.getElementById('viewer').classList.remove('open');
+  viewerIdx = -1;
+}
+async function downloadCurrent() {
+  if (viewerIdx < 0) return;
+  const p = photos[viewerIdx];
+
+  if (navigator.share && navigator.canShare && p.blob) {
+    const file = new File([p.blob], p.fileName, { type: 'image/jpeg' });
+    if (navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file] });
+        return;
+      } catch(e) { if (e.name === 'AbortError') return; }
+    }
+  }
+  const a = document.createElement('a');
+  a.href = p.dataUrl; a.download = p.fileName; a.click();
+}
+function deleteCurrent() {
+  if (viewerIdx < 0) return;
+  photos.splice(viewerIdx, 1);
+  rebuildThumbs();
+  closeViewer();
+}
+function rebuildThumbs() {
+  const strip = document.getElementById('thumb-strip');
+  strip.innerHTML = '<div id="photo-count"></div>';
+  photos.forEach((_, i) => addThumb(i));
+}
+
+// ── TOLÉRANCE ────────────────────────────────────────────────────
+function cycleTolerance() {
+  tolIdx = (tolIdx + 1) % TOLERANCES.length;
+  document.getElementById('tol-val').textContent = TOLERANCES[tolIdx].toFixed(1);
+  showToast(`Tolérance ±${TOLERANCES[tolIdx].toFixed(1)}°`);
+  stableCount = 0;
+}
+
+function cycleQuality() {
+  qualIdx = (qualIdx + 1) % QUALITY_PRESETS.length;
+  const q = currentQual();
+  document.getElementById('q-val').textContent = q.label;
+  showToast(`Qualité ${q.label} — JPEG ${Math.round(q.val*100)}% ${q.est}`);
+}
+
+// ── TOAST ────────────────────────────────────────────────────────
+let toastTimer = null;
+function showToast(msg, err=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = err ? 'err show' : 'show';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.className = '', 2400);
+}
+
+// ── SIMULATION DESKTOP (test sans gyro) ──────────────────────────
+if (typeof DeviceOrientationEvent === 'undefined') {
+  let t = 0;
+  setInterval(() => {
+    t += 0.02;
+    roll  = Math.sin(t) * 8;
+    pitch = Math.cos(t * 0.7) * 5;
+    sensorAvail = true;
+    updateLevels();
+  }, 50);
+}
+
+
+// ── SETTINGS ─────────────────────────────────────────────────────────
+const hudState = {
+  grille:   true,
+  bandes:   true,
+  badge:    false,   // masqué par défaut
+  wordmark: false,   // masqué par défaut
+};
+
+const hudTargets = {
+  grille:   () => document.querySelectorAll('.gl'),
+  bandes:   () => document.querySelectorAll('#band-h,#band-v,#band-h-label,#band-v-label'),
+  badge:    () => document.querySelectorAll('#plan-badge'),
+  wordmark: () => document.querySelectorAll('#app-wordmark'),
+};
+
+function toggleSettings() {
+  const btn   = document.getElementById('settings-btn');
+  const panel = document.getElementById('settings-panel');
+  const open  = panel.classList.toggle('open');
+  btn.classList.toggle('open', open);
+}
+
+// Fermer le panel si on tape ailleurs
+document.addEventListener('click', e => {
+  const panel = document.getElementById('settings-panel');
+  const btn   = document.getElementById('settings-btn');
+  if (panel.classList.contains('open') && !panel.contains(e.target) && e.target !== btn) {
+    panel.classList.remove('open');
+    btn.classList.remove('open');
+  }
+});
+
+function toggleHUD(key) {
+  hudState[key] = !hudState[key];
+  const tog = document.getElementById('tog-' + key);
+  tog.classList.toggle('on', hudState[key]);
+  hudTargets[key]().forEach(el => {
+    // Forcer opacity explicitement — les animations CSS laissent opacity:0
+    // dans le style calculé, 'inherit' ou '' ne suffit pas.
+    el.style.setProperty('opacity',        hudState[key] ? '1' : '0', 'important');
+    el.style.setProperty('pointer-events', hudState[key] ? ''  : 'none', 'important');
+    el.style.setProperty('visibility',     hudState[key] ? 'visible' : 'hidden', 'important');
+  });
+}
+
+function setQual(idx) {
+  qualIdx = idx;
+  document.querySelectorAll('#seg-qual .s-seg-btn').forEach((b,i) =>
+    b.classList.toggle('active', i === idx));
+  // Sync affichage topbar si jamais il y en a un
+  const qv = document.getElementById('q-val');
+  if (qv) qv.textContent = QUALITY_PRESETS[idx].label;
+  showToast('Qualité ' + QUALITY_PRESETS[idx].label + ' — ' + QUALITY_PRESETS[idx].est);
+}
+
+function setTol(idx) {
+  tolIdx = idx;
+  document.querySelectorAll('#seg-tol .s-seg-btn').forEach((b,i) =>
+    b.classList.toggle('active', i === idx));
+  const tv = document.getElementById('tol-val');
+  if (tv) tv.textContent = TOLERANCES[idx].toFixed(1);
+  stableCount = 0;
+  showToast('Tolérance ±' + TOLERANCES[idx].toFixed(1) + '°');
+}
+
+// ── INIT SETTINGS — appliquer les états par défaut ──────────────────
+function initHUDDefaults() {
+  Object.keys(hudState).forEach(key => {
+    const els = hudTargets[key]();
+    const on  = hudState[key];
+    els.forEach(el => {
+      el.style.setProperty('opacity',        on ? '1' : '0', 'important');
+      el.style.setProperty('pointer-events', on ? '' : 'none', 'important');
+      el.style.setProperty('visibility',     on ? 'visible' : 'hidden', 'important');
+    });
+    const tog = document.getElementById('tog-' + key);
+    if (tog) tog.classList.toggle('on', on);
+  });
+  // Les flèches sont gérées exclusivement par updateLevels — pas de style forcé
+  ['arrow-h','arrow-v'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.style.removeProperty('opacity'); el.style.removeProperty('visibility'); el.style.removeProperty('pointer-events'); }
+  });
+}
+
+// ── BOUTON VOLUME PHYSIQUE (déclencheur appareil photo iPhone) ──────
+// Safari iOS expose les touches volume via keydown.
+// preventDefault empêche le changement de volume système.
+// Le body doit avoir le focus pour recevoir les événements clavier.
+document.body.setAttribute('tabindex', '-1');
+document.body.focus();
+
+window.addEventListener('keydown', e => {
+  if (e.key === 'AudioVolumeDown' || e.key === 'AudioVolumeUp' ||
+      e.key === 'VolumeDown'      || e.key === 'VolumeUp'      ||
+      e.key === 'MediaVolumeDown' || e.key === 'MediaVolumeUp'  ||
+      e.keyCode === 25            || e.keyCode === 24) {
+    e.preventDefault();
+    handleShutter();
+  }
+}, { passive: false });
+
+// Redonner le focus si l'utilisateur tape ailleurs
+document.addEventListener('click', () => { document.body.focus(); });
+
+// ── INIT ─────────────────────────────────────────────────────────
+updateLevels();
+</script>
+
+<script>
+  // Enregistrement du Service Worker (PWA offline support)
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('[SW] Enregistré:', reg.scope))
+        .catch(err => console.warn('[SW] Erreur:', err));
+    });
+  }
+</script>
+</body>
+</html>
