@@ -65,8 +65,8 @@
     position:fixed; z-index:6; pointer-events:none;
     transition: opacity .55s cubic-bezier(.4,0,.2,1);
   }
-  #band-h { top:0; left:0; width:56px; height:100%; }
-  #band-v { bottom:0; left:0; width:100%; height:56px; }
+  #band-h { bottom:0; left:0; width:100%; height:56px; }
+  #band-v { top:0; left:0; width:56px; height:100%; }
 
   #band-h::after {
     content:''; position:absolute; inset:0;
@@ -106,18 +106,15 @@
     opacity:0; transition:opacity .3s;
   }
   .band-arrow.show { opacity:1; }
-  /* Bande gauche — roulis : flèche au-dessus du label ROULIS */
-  #arrow-h { left:8px; top:calc(50% - 40px); transform:translateY(-50%); width:28px; height:28px; }
-  /* Bande basse — inclinaison : flèche remontée au-dessus du label INCL. */
-  #arrow-v { bottom:46px; left:50%; transform:translateX(-50%); width:28px; height:28px; }
+  /* Bande basse — roulis : flèche centrée, remontée au-dessus du label */
+  #arrow-h { bottom:46px; left:50%; transform:translateX(-50%); width:28px; height:28px; }
+  /* Bande gauche — inclinaison : flèche décalée au-dessus du centre */
+  #arrow-v { left:8px; top:calc(50% - 40px); transform:translateY(-50%); width:28px; height:28px; }
 
-  #arrow-h.show { animation:arr-bounce-v 1s ease-in-out infinite; }
-  #arrow-v.show { animation:arr-bounce-h 1s ease-in-out infinite; }
-  /* Dir-up : monte, dir-down : descend */
-  #arrow-h.dir-up.show   { animation:arr-bounce-up   1s ease-in-out infinite; }
-  #arrow-h.dir-down.show { animation:arr-bounce-down 1s ease-in-out infinite; }
-  #arrow-v.dir-left.show  { animation:arr-bounce-left  1s ease-in-out infinite; }
-  #arrow-v.dir-right.show { animation:arr-bounce-right 1s ease-in-out infinite; }
+  #arrow-h.dir-left.show  { animation:arr-bounce-left  1s ease-in-out infinite; }
+  #arrow-h.dir-right.show { animation:arr-bounce-right 1s ease-in-out infinite; }
+  #arrow-v.dir-up.show   { animation:arr-bounce-up   1s ease-in-out infinite; }
+  #arrow-v.dir-down.show { animation:arr-bounce-down 1s ease-in-out infinite; }
   @keyframes arr-bounce-up    { 0%,100%{transform:translateY(-50%)} 50%{transform:translateY(calc(-50% - 8px))} }
   @keyframes arr-bounce-down  { 0%,100%{transform:translateY(-50%)} 50%{transform:translateY(calc(-50% + 8px))} }
   @keyframes arr-bounce-left  { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(calc(-50% - 8px)) translateY(0)} }
@@ -1136,37 +1133,45 @@ function updateLevels() {
   document.getElementById('band-h-label').textContent =
     rollOk  ? `ROULIS ✓ ${roll.toFixed(1)}°`  : `ROULIS ${roll.toFixed(1)}°`;
   document.getElementById('band-v-label').textContent =
-    pitchOk ? `INCL. ✓ ${pitch.toFixed(1)}°`  : `INCL. ${pitch.toFixed(1)}°`;
+    pitchOk ? `INCL. ✓ ${pitch.toFixed(1)}°` : `INCL. ${pitch.toFixed(1)}°`;
+  document.getElementById('band-h-label').className = rollOk  ? 'ok' : 'nok';
+  document.getElementById('band-v-label').className = pitchOk ? 'ok' : 'nok';
 
-  // ── Flèche ROULIS (bande gauche) — triangle SVG ──
+  // ── Flèche ROULIS (bande basse) — pointe gauche ou droite ──
+  // roulis = rotation G/D → flèche ← ou → indique de quel côté relever
   const arrowH     = document.getElementById('arrow-h');
   const arrowHPoly = document.getElementById('arrow-h-poly');
   if (rollOk) {
-    arrowH.classList.remove('show', 'dir-up', 'dir-down');
+    arrowH.classList.remove('show', 'dir-left', 'dir-right');
   } else {
     arrowH.classList.add('show');
     if (roll > 0) {
-      arrowH.classList.remove('dir-down'); arrowH.classList.add('dir-up');
-      arrowHPoly.setAttribute('points', '14,3 25,22 3,22'); // ↑
+      // Téléphone penche à droite → pointer vers la droite (relever le côté droit)
+      arrowH.classList.remove('dir-left'); arrowH.classList.add('dir-right');
+      arrowHPoly.setAttribute('points', '25,14 6,3 6,25');  // →
     } else {
-      arrowH.classList.remove('dir-up'); arrowH.classList.add('dir-down');
-      arrowHPoly.setAttribute('points', '14,25 25,6 3,6');  // ↓
+      // Téléphone penche à gauche → pointer vers la gauche
+      arrowH.classList.remove('dir-right'); arrowH.classList.add('dir-left');
+      arrowHPoly.setAttribute('points', '3,14 22,3 22,25'); // ←
     }
   }
 
-  // ── Flèche INCLINAISON (bande basse) — triangle SVG ──
+  // ── Flèche INCLINAISON (bande gauche) — pointe haut ou bas ──
+  // inclinaison = avant/arrière → flèche ↑ ou ↓ indique sens de correction
   const arrowV     = document.getElementById('arrow-v');
   const arrowVPoly = document.getElementById('arrow-v-poly');
   if (pitchOk) {
-    arrowV.classList.remove('show', 'dir-left', 'dir-right');
+    arrowV.classList.remove('show', 'dir-up', 'dir-down');
   } else {
     arrowV.classList.add('show');
     if (pitch > 0) {
-      arrowV.classList.remove('dir-right'); arrowV.classList.add('dir-left');
-      arrowVPoly.setAttribute('points', '3,14 22,3 22,25'); // ←
+      // Avant trop bas → remonter le haut du téléphone → flèche ↑
+      arrowV.classList.remove('dir-down'); arrowV.classList.add('dir-up');
+      arrowVPoly.setAttribute('points', '14,3 25,22 3,22'); // ↑
     } else {
-      arrowV.classList.remove('dir-left'); arrowV.classList.add('dir-right');
-      arrowVPoly.setAttribute('points', '25,14 6,3 6,25');  // →
+      // Avant trop haut → descendre → flèche ↓
+      arrowV.classList.remove('dir-up'); arrowV.classList.add('dir-down');
+      arrowVPoly.setAttribute('points', '14,25 25,6 3,6');  // ↓
     }
   }
 
