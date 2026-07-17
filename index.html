@@ -100,52 +100,28 @@
   #band-h-label.ok, #band-v-label.ok { color:var(--ok); }
   #band-h-label.nok, #band-v-label.nok { color:var(--nok); }
 
-  /* ── FLÈCHES DE CORRECTION — grandes, lisibles ── */
+  /* ── FLÈCHES DE CORRECTION — triangles SVG ── */
   .band-arrow {
     position:fixed; pointer-events:none; z-index:13;
-    display:flex; flex-direction:column; align-items:center; gap:4px;
-    opacity:0; transition:opacity .35s;
+    opacity:0; transition:opacity .3s;
   }
   .band-arrow.show { opacity:1; }
-  .band-arrow .arr-icon {
-    font-size:32px; line-height:1;
-    filter:drop-shadow(0 2px 8px rgba(0,0,0,.9)) drop-shadow(0 0 12px rgba(255,69,58,.6));
-  }
-  .band-arrow .arr-label {
-    font-family:var(--mono); font-size:10px; font-weight:700; letter-spacing:1.5px;
-    text-transform:uppercase; color:#fff;
-    text-shadow:0 1px 6px rgba(0,0,0,.9), 0 0 12px rgba(0,0,0,.8);
-    white-space:nowrap;
-  }
-  /* Bande gauche — roulis — centré verticalement */
-  #arrow-h {
-    left:6px; top:50%; transform:translateY(-50%);
-    flex-direction:column;
-  }
-  /* Bande basse — inclinaison — centré horizontalement */
-  #arrow-v {
-    bottom:6px; left:50%; transform:translateX(-50%);
-    flex-direction:row; gap:6px; align-items:center;
-  }
-  #arrow-v .arr-label { writing-mode:horizontal-tb; }
+  /* Bande gauche — roulis */
+  #arrow-h { left:14px; top:50%; transform:translateY(-50%); width:28px; height:28px; }
+  /* Bande basse — inclinaison */
+  #arrow-v { bottom:14px; left:50%; transform:translateX(-50%); width:28px; height:28px; }
 
-  /* Animation : pulsation douce sur l'icône uniquement */
-  .band-arrow.show .arr-icon {
-    animation:arr-pulse 1.2s ease-in-out infinite;
-  }
-  @keyframes arr-pulse {
-    0%,100% { transform:scale(1);   opacity:.7; }
-    50%      { transform:scale(1.2); opacity:1;  }
-  }
-  /* Quand la flèche pointe en haut, l'animation translate vers le haut */
-  #arrow-h.dir-up.show   .arr-icon { animation:arr-up   1.2s ease-in-out infinite; }
-  #arrow-h.dir-down.show .arr-icon { animation:arr-down 1.2s ease-in-out infinite; }
-  #arrow-v.dir-left.show .arr-icon { animation:arr-left 1.2s ease-in-out infinite; }
-  #arrow-v.dir-right.show .arr-icon { animation:arr-right 1.2s ease-in-out infinite; }
-  @keyframes arr-up    { 0%,100%{transform:translateY(0)}  50%{transform:translateY(-6px)} }
-  @keyframes arr-down  { 0%,100%{transform:translateY(0)}  50%{transform:translateY(6px)} }
-  @keyframes arr-left  { 0%,100%{transform:translateX(0)}  50%{transform:translateX(-6px)} }
-  @keyframes arr-right { 0%,100%{transform:translateX(0)}  50%{transform:translateX(6px)} }
+  #arrow-h.show { animation:arr-bounce-v 1s ease-in-out infinite; }
+  #arrow-v.show { animation:arr-bounce-h 1s ease-in-out infinite; }
+  /* Dir-up : monte, dir-down : descend */
+  #arrow-h.dir-up.show   { animation:arr-bounce-up   1s ease-in-out infinite; }
+  #arrow-h.dir-down.show { animation:arr-bounce-down 1s ease-in-out infinite; }
+  #arrow-v.dir-left.show  { animation:arr-bounce-left  1s ease-in-out infinite; }
+  #arrow-v.dir-right.show { animation:arr-bounce-right 1s ease-in-out infinite; }
+  @keyframes arr-bounce-up    { 0%,100%{transform:translateY(-50%)} 50%{transform:translateY(calc(-50% - 7px))} }
+  @keyframes arr-bounce-down  { 0%,100%{transform:translateY(-50%)} 50%{transform:translateY(calc(-50% + 7px))} }
+  @keyframes arr-bounce-left  { 0%,100%{transform:translateX(-50%)} 50%{transform:translateX(calc(-50% - 7px))} }
+  @keyframes arr-bounce-right { 0%,100%{transform:translateX(-50%)} 50%{transform:translateX(calc(-50% + 7px))} }
 
   /* ── GRILLE TIERS — traits solides visibles ── */
   .gl {
@@ -802,7 +778,7 @@
 <!-- ── PERMISSION ── -->
 
 <!-- ── SPLASH SCREEN ── -->
-<div id="splash">
+<div id="splash" style="display:none">
   <div id="splash-reticle">
     <div id="splash-scan"></div>
     <svg viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -876,14 +852,14 @@
 <div id="band-v-label" class="nok">Inclinaison</div>
 
 <!-- ── FLÈCHES ── -->
-<div id="arrow-h" class="band-arrow">
-  <span class="arr-icon" id="arrow-h-icon">↑</span>
-  <span class="arr-label" id="arrow-h-label">LEVER</span>
-</div>
-<div id="arrow-v" class="band-arrow">
-  <span class="arr-icon" id="arrow-v-icon">←</span>
-  <span class="arr-label" id="arrow-v-label">INCLINER</span>
-</div>
+<svg id="arrow-h" class="band-arrow" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+  <polygon id="arrow-h-poly" points="14,3 25,22 3,22" fill="white"
+    filter="drop-shadow(0 2px 6px rgba(0,0,0,.9))"/>
+</svg>
+<svg id="arrow-v" class="band-arrow" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+  <polygon id="arrow-v-poly" points="3,14 22,3 22,25" fill="white"
+    filter="drop-shadow(0 2px 6px rgba(0,0,0,.9))"/>
+</svg>
 
 <!-- ── GRILLE ── -->
 <div class="gl gl-v" id="gl1"></div>
@@ -998,26 +974,34 @@
 
 <script>
 
-// ── SPLASH ANIMATION ─────────────────────────────────────────────────
-(function() {
-  const bar     = document.getElementById('splash-bar');
-  const splash  = document.getElementById('splash');
-  let pct = 0;
+// ── SPLASH ANIMATION — déclenché après permissions ───────────────────
+function showSplash() {
+  const bar    = document.getElementById('splash-bar');
+  const splash = document.getElementById('splash');
+  splash.style.display = 'flex';
+  bar.style.width = '0%';
+
+  // Durée totale : 2 secondes
+  const DURATION = 2000;
+  const STEP_MS  = 60;
+  const steps    = DURATION / STEP_MS;
+  let   step     = 0;
+
   const iv = setInterval(() => {
-    pct += Math.random() * 18 + 4;
-    if (pct >= 100) {
-      pct = 100;
+    step++;
+    // Progression easing : rapide au début, ralentit à la fin
+    const pct = Math.min(100, Math.round((1 - Math.pow(1 - step/steps, 2)) * 100));
+    bar.style.width = pct + '%';
+    if (step >= steps) {
       clearInterval(iv);
       bar.style.width = '100%';
       setTimeout(() => {
         splash.classList.add('done');
         setTimeout(() => { splash.style.display = 'none'; }, 650);
-      }, 300);
-    } else {
-      bar.style.width = pct + '%';
+      }, 200);
     }
-  }, 80);
-})();
+  }, STEP_MS);
+}
 
 // ── CONFIG ──────────────────────────────────────────────────────
 const TOLERANCES = [0.5, 1.0, 1.5, 2.5];
@@ -1084,11 +1068,14 @@ async function initCamera() {
     document.getElementById('quality-info').textContent =
       `${settings.width||'?'} × ${settings.height||'?'} px`;
 
-    // Tout est prêt → on révèle le HUD avec sa séquence d'animation
+    // Tout est prêt → splash 2s puis HUD
     document.getElementById('perm-screen').style.display = 'none';
-    document.body.classList.add('live');
-    // Appliquer les états HUD par défaut après que le HUD soit visible
-    setTimeout(initHUDDefaults, 600);
+    showSplash();
+    // Après les 2s de splash + 0.65s de fondu → révéler le HUD
+    setTimeout(() => {
+      document.body.classList.add('live');
+      setTimeout(initHUDDefaults, 600);
+    }, 2000 + 650);
   } catch(e) {
     btn.disabled = false;
     btn.textContent = 'Réessayer';
@@ -1151,45 +1138,35 @@ function updateLevels() {
   document.getElementById('band-v-label').textContent =
     pitchOk ? `INCL. ✓ ${pitch.toFixed(1)}°`  : `INCL. ${pitch.toFixed(1)}°`;
 
-  // ── Flèche ROULIS (bande gauche) ──
+  // ── Flèche ROULIS (bande gauche) — triangle SVG ──
   const arrowH     = document.getElementById('arrow-h');
-  const arrowHIcon = document.getElementById('arrow-h-icon');
-  const arrowHLbl  = document.getElementById('arrow-h-label');
+  const arrowHPoly = document.getElementById('arrow-h-poly');
   if (rollOk) {
     arrowH.classList.remove('show', 'dir-up', 'dir-down');
   } else {
     arrowH.classList.add('show');
     if (roll > 0) {
-      // Bord gauche trop bas → lever la gauche
       arrowH.classList.remove('dir-down'); arrowH.classList.add('dir-up');
-      arrowHIcon.textContent = '↑';
-      arrowHLbl.textContent  = 'LEVER';
+      arrowHPoly.setAttribute('points', '14,3 25,22 3,22'); // ↑
     } else {
-      // Bord gauche trop haut → baisser la gauche
       arrowH.classList.remove('dir-up'); arrowH.classList.add('dir-down');
-      arrowHIcon.textContent = '↓';
-      arrowHLbl.textContent  = 'BAISSER';
+      arrowHPoly.setAttribute('points', '14,25 25,6 3,6');  // ↓
     }
   }
 
-  // ── Flèche INCLINAISON (bande basse) ──
+  // ── Flèche INCLINAISON (bande basse) — triangle SVG ──
   const arrowV     = document.getElementById('arrow-v');
-  const arrowVIcon = document.getElementById('arrow-v-icon');
-  const arrowVLbl  = document.getElementById('arrow-v-label');
+  const arrowVPoly = document.getElementById('arrow-v-poly');
   if (pitchOk) {
     arrowV.classList.remove('show', 'dir-left', 'dir-right');
   } else {
     arrowV.classList.add('show');
     if (pitch > 0) {
-      // Avant trop bas → incliner vers l'arrière
       arrowV.classList.remove('dir-right'); arrowV.classList.add('dir-left');
-      arrowVIcon.textContent = '←';
-      arrowVLbl.textContent  = 'RECULER';
+      arrowVPoly.setAttribute('points', '3,14 22,3 22,25'); // ←
     } else {
-      // Avant trop haut → incliner vers l'avant
       arrowV.classList.remove('dir-left'); arrowV.classList.add('dir-right');
-      arrowVIcon.textContent = '→';
-      arrowVLbl.textContent  = 'AVANCER';
+      arrowVPoly.setAttribute('points', '25,14 6,3 6,25');  // →
     }
   }
 
