@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#000000">
+<meta name="screen-orientation" content="portrait">
 <title>NiveauCam</title>
 <style>
   /* ═══════════════════════════════════════════════════════════════
@@ -34,9 +37,9 @@
     --ink-3:     rgba(255,255,255,0.30);
 
     /* SF Pro stack */
-    --sf: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
-    --sf-text: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
-    --mono: ui-monospace, 'SF Mono', monospace;
+    --sf: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Google Sans', Roboto, system-ui, sans-serif;
+    --sf-text: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Google Sans', Roboto, system-ui, sans-serif;
+    --mono: ui-monospace, 'SF Mono', 'Roboto Mono', monospace;
 
     /* Geometry */
     --r-pill:  999px;
@@ -633,6 +636,45 @@
   /* Séparateur */
   .s-sep { height:0.5px; background:rgba(255,255,255,.08); margin:2px 0; }
 
+
+  /* ── FALLBACK SAFE AREA pour Android sans support env() ── */
+  @supports not (padding: env(safe-area-inset-top)) {
+    #topbar      { padding-top: 14px !important; }
+    #settings-btn{ top: 14px !important; }
+    #settings-panel { top: 58px !important; }
+    #plan-badge  { top: 18px !important; }
+    #c-tl, #c-tr { top: 80px !important; }
+    #c-bl, #c-br { bottom: 144px !important; }
+    #thumb-strip { bottom: 24px !important; }
+    #controls    { padding-bottom: 24px !important; }
+    #toast       { bottom: 150px !important; }
+    #viewer      { padding-bottom: 0 !important; }
+    #perm-screen { padding-bottom: 52px !important; }
+    #perm-icon   { top: 14% !important; }
+  }
+
+  /* ── FALLBACK backdrop-filter pour Android < Chrome 76 ── */
+  @supports not (backdrop-filter: blur(1px)) {
+    .top-pill, #settings-btn, #settings-panel,
+    #plan-badge, #band-h-label, #band-v-label,
+    #viewer-sheet, #viewer-backdrop,
+    #perm-logo, #perm-card, #cancel-cd-btn, #toast {
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+    .top-pill        { background: rgba(20,20,22,.88) !important; }
+    #settings-btn    { background: rgba(20,20,22,.88) !important; }
+    #settings-panel  { background: rgba(18,18,20,.97) !important; }
+    #plan-badge      { background: rgba(18,18,20,.88) !important; }
+    #band-h-label, #band-v-label { background: rgba(10,10,12,.85) !important; }
+    #viewer-sheet    { background: rgba(16,16,18,.98) !important; }
+    #viewer-backdrop { background: rgba(0,0,0,.75) !important; }
+    #perm-card       { background: rgba(18,18,20,.98) !important; }
+    #toast           { background: rgba(18,18,20,.95) !important; }
+    #cancel-cd-btn   { background: rgba(18,18,20,.88) !important; }
+    #shutter-ring    { background: rgba(255,255,255,.12) !important; }
+  }
+
   @media (prefers-reduced-motion:reduce) { *{ animation-duration:.001s!important; transition-duration:.001s!important; } }
 </style>
 </head>
@@ -843,21 +885,21 @@ async function initCamera() {
   await requestGyro();
 
   // 2) CAMÉRA — qualité maximale
-  const constraints = {
-    video: {
-      facingMode: { ideal: 'environment' },
-      width:  { ideal: 4032 },
-      height: { ideal: 3024 },
-      frameRate: { ideal: 60 },
-      advanced: [
-        { width: 4032, height: 3024 },
-        { width: 3840, height: 2160 },
-        { width: 1920, height: 1080 },
-      ]
-    }
-  };
+  // Contraintes progressives : on tente la résolution max, fallback si refusé
+  const constraintsList = [
+    { video: { facingMode: { ideal: 'environment' }, width: { ideal: 4032 }, height: { ideal: 3024 }, frameRate: { ideal: 60 } } },
+    { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } } },
+    { video: { facingMode: 'environment' } },
+    { video: true }, // dernier recours — n'importe quelle caméra
+  ];
+  let stream_candidate = null;
+  for (const c of constraintsList) {
+    try { stream_candidate = await navigator.mediaDevices.getUserMedia(c); break; }
+    catch(e) { /* essayer suivant */ }
+  }
+  stream = stream_candidate;
+  if (!stream) { throw new Error('Aucune caméra disponible'); }
   try {
-    stream = await navigator.mediaDevices.getUserMedia(constraints);
     const video = document.getElementById('video');
     video.srcObject = stream;
     await video.play();
@@ -872,21 +914,39 @@ async function initCamera() {
     btn.disabled = false;
     btn.textContent = 'Réessayer';
     alert('Accès caméra refusé ou indisponible.\n\n' + e.message +
-          '\n\nOuvre cette page dans Safari sur iOS et autorise la caméra.');
+          '\n\nSur iOS : ouvre dans Safari.\nSur Android : ouvre dans Chrome et autorise la caméra.');
   }
 }
 
 // ── GYROSCOPE ───────────────────────────────────────────────────
 async function requestGyro() {
-  // iOS 13+ : permission mouvement/orientation explicite (nécessite le geste utilisateur)
-  if (typeof DeviceOrientationEvent !== 'undefined' &&
-      typeof DeviceOrientationEvent.requestPermission === 'function') {
+  if (typeof DeviceOrientationEvent === 'undefined') {
+    // Navigateur desktop ou appareil sans gyro
+    listenOrientation();
+    return;
+  }
+  // iOS 13+ : nécessite requestPermission() explicite
+  if (typeof DeviceOrientationEvent.requestPermission === 'function') {
     try {
       const r = await DeviceOrientationEvent.requestPermission();
       if (r === 'granted') gyroGranted = true;
-    } catch(e) { /* refusé ou indisponible : l'app fonctionne sans, niveaux inactifs */ }
+      else {
+        // Permission refusée sur iOS — on continue sans gyro
+        document.getElementById('plan-badge').textContent = 'Capteur refusé — niveaux inactifs';
+      }
+    } catch(e) { /* silencieux */ }
+  } else {
+    // Android / autres : pas de requestPermission, accès direct
+    gyroGranted = true;
   }
   listenOrientation();
+  // Android : parfois le premier événement met 500ms à arriver
+  setTimeout(() => {
+    if (!sensorAvail) {
+      // Dernier recours : tenter devicemotion aussi
+      window.addEventListener('devicemotion', () => { sensorAvail = true; }, { once: true });
+    }
+  }, 1500);
 }
 function listenOrientation() {
   window.addEventListener('deviceorientation', e => {
@@ -1242,7 +1302,9 @@ document.body.focus();
 
 window.addEventListener('keydown', e => {
   if (e.key === 'AudioVolumeDown' || e.key === 'AudioVolumeUp' ||
-      e.key === 'VolumeDown'      || e.key === 'VolumeUp') {
+      e.key === 'VolumeDown'      || e.key === 'VolumeUp'      ||
+      e.key === 'MediaVolumeDown' || e.key === 'MediaVolumeUp'  ||
+      e.keyCode === 25            || e.keyCode === 24) {
     e.preventDefault();
     handleShutter();
   }
