@@ -243,6 +243,14 @@
     text-shadow:0 1px 3px rgba(0,0,0,.6);
   }
   #app-name svg { filter:drop-shadow(0 0 4px rgba(95,227,236,.5)); }
+  #quality-display {
+    font-family:var(--mono); font-size:12px; font-weight:600; color:var(--chrome);
+    letter-spacing:1px; cursor:pointer;
+    padding:6px 13px; border:1px solid rgba(95,227,236,.4);
+    border-radius:11px; background:rgba(95,227,236,.08); backdrop-filter:blur(6px);
+    transition:transform .1s, background .2s; white-space:nowrap;
+  }
+  #quality-display:active { transform:scale(.94); background:rgba(95,227,236,.18); }
   #tolerance-display {
     font-family:var(--mono); font-size:12px; font-weight:600; color:var(--chrome);
     letter-spacing:1px; pointer-events:all; cursor:pointer;
@@ -379,18 +387,6 @@
   }
   @keyframes viewer-pop { from{transform:scale(.92); opacity:0} to{transform:scale(1); opacity:1} }
 
-  #piece-name-wrap { display:flex; flex-direction:column; gap:7px; width:100%; max-width:360px; }
-  #piece-name-wrap label {
-    font-family:var(--mono); font-size:10px; color:var(--chrome-d);
-    letter-spacing:1.5px; text-transform:uppercase;
-  }
-  #piece-name-input {
-    background:rgba(95,227,236,.06); border:1px solid rgba(95,227,236,.25);
-    border-radius:12px; color:var(--ink); font-size:16px; padding:12px 15px;
-    outline:none; font-family:var(--mono); width:100%; transition:border-color .2s, background .2s;
-  }
-  #piece-name-input:focus { border-color:var(--chrome); background:rgba(95,227,236,.1); }
-  #piece-name-input::placeholder { color:rgba(234,242,244,.28); }
 
   .viewer-meta {
     font-family:var(--mono); font-size:11px; color:rgba(234,242,244,.5);
@@ -495,7 +491,10 @@
     </svg>
     NiveauCam
   </div>
-  <div id="tolerance-display" onclick="cycleTolerance()"><span class="tol-lbl">TOL </span>±<span id="tol-val">1.5</span>°</div>
+  <div style="display:flex;gap:8px;align-items:center;pointer-events:all;">
+    <div id="quality-display" onclick="cycleQuality()">Q <span id="q-val">HAUTE</span></div>
+    <div id="tolerance-display" onclick="cycleTolerance()"><span class="tol-lbl">TOL </span>±<span id="tol-val">1.5</span>°</div>
+  </div>
 </div>
 
 <!-- MINIATURES -->
@@ -518,10 +517,6 @@
 <!-- VISIONNEUSE -->
 <div id="viewer">
   <img id="viewer-img" src="" alt="">
-  <div id="piece-name-wrap">
-    <label for="piece-name-input">Référence / nom de la pièce</label>
-    <input id="piece-name-input" type="text" placeholder="ex : bride_M8_inox" autocomplete="off" autocorrect="off">
-  </div>
   <div class="viewer-meta" id="viewer-meta"></div>
   <div class="viewer-btns">
     <button class="vbtn" id="vbtn-download" onclick="downloadCurrent()">⬇ Enregistrer</button>
@@ -538,6 +533,16 @@
 const TOLERANCES = [0.5, 1.0, 1.5, 2.5];
 let tolIdx = 2;
 const currentTol = () => TOLERANCES[tolIdx];
+
+// Qualité JPEG : presets avec label, valeur, et estimation de taille
+const QUALITY_PRESETS = [
+  { label: 'MAX',       val: 1.00, est: '~7 Mo' },
+  { label: 'HAUTE',     val: 0.92, est: '~3 Mo' },
+  { label: 'STANDARD',  val: 0.85, est: '~2 Mo' },
+  { label: 'LÉGÈRE',    val: 0.72, est: '~1 Mo' },
+];
+let qualIdx = 1; // défaut HAUTE (0.92)
+const currentQual = () => QUALITY_PRESETS[qualIdx];
 
 // Stabilisation : nb de lectures consécutives dans la tolérance avant de valider
 const STABLE_FRAMES = 12; // ~600ms à 20Hz
@@ -768,12 +773,14 @@ async function takePhoto() {
   canvas.width = w; canvas.height = h;
   canvas.getContext('2d').drawImage(video, 0, 0, w, h);
 
-  const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 1.0));
+  const q = currentQual();
+  const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', q.val));
   const dataUrl = URL.createObjectURL(blob);
   const ts = new Date();
   const fileName = `piece_${ts.toISOString().replace(/[:.]/g,'-')}.jpg`;
 
-  photos.push({ dataUrl, blob, fileName, name: '', roll: roll.toFixed(2), pitch: pitch.toFixed(2), ts, w, h });
+  const sizeMB = (blob.size / 1048576).toFixed(1);
+  photos.push({ dataUrl, blob, fileName, roll: roll.toFixed(2), pitch: pitch.toFixed(2), ts, w, h, sizeMB });
 
   flashEffect();
   vibrate([40, 30, 40]);
@@ -813,41 +820,31 @@ function openViewer(idx) {
   viewerIdx = idx;
   const p = photos[idx];
   document.getElementById('viewer-img').src = p.dataUrl;
-  document.getElementById('piece-name-input').value = p.name || '';
   document.getElementById('viewer-meta').innerHTML =
-    `${p.w} × ${p.h} px — JPEG qualité max<br>` +
+    `${p.w} × ${p.h} px · ${p.sizeMB} Mo<br>` +
     `Roulis : ${p.roll}°  ·  Incl. : ${p.pitch}°<br>` +
     `${p.ts.toLocaleString('fr-FR')}`;
   document.getElementById('viewer').classList.add('open');
 }
 function closeViewer() {
-  // Sauvegarder le nom saisi
-  if (viewerIdx >= 0) {
-    photos[viewerIdx].name = document.getElementById('piece-name-input').value.trim();
-  }
   document.getElementById('viewer').classList.remove('open');
   viewerIdx = -1;
 }
 async function downloadCurrent() {
   if (viewerIdx < 0) return;
   const p = photos[viewerIdx];
-  // Nom de fichier incluant la référence pièce si renseignée
-  const namePart = p.name ? p.name.replace(/[^a-zA-Z0-9_-]/g,'_') : '';
-  const finalName = namePart
-    ? `${namePart}_${p.ts.toISOString().replace(/[:.]/g,'-')}.jpg`
-    : p.fileName;
 
   if (navigator.share && navigator.canShare && p.blob) {
-    const file = new File([p.blob], finalName, { type: 'image/jpeg' });
+    const file = new File([p.blob], p.fileName, { type: 'image/jpeg' });
     if (navigator.canShare({ files: [file] })) {
       try {
-        await navigator.share({ files: [file], title: p.name || 'Photo pièce mécanique' });
+        await navigator.share({ files: [file] });
         return;
       } catch(e) { if (e.name === 'AbortError') return; }
     }
   }
   const a = document.createElement('a');
-  a.href = p.dataUrl; a.download = finalName; a.click();
+  a.href = p.dataUrl; a.download = p.fileName; a.click();
 }
 function deleteCurrent() {
   if (viewerIdx < 0) return;
@@ -866,7 +863,14 @@ function cycleTolerance() {
   tolIdx = (tolIdx + 1) % TOLERANCES.length;
   document.getElementById('tol-val').textContent = TOLERANCES[tolIdx].toFixed(1);
   showToast(`Tolérance ±${TOLERANCES[tolIdx].toFixed(1)}°`);
-  stableCount = 0; // reset stabilisation
+  stableCount = 0;
+}
+
+function cycleQuality() {
+  qualIdx = (qualIdx + 1) % QUALITY_PRESETS.length;
+  const q = currentQual();
+  document.getElementById('q-val').textContent = q.label;
+  showToast(`Qualité ${q.label} — JPEG ${Math.round(q.val*100)}% ${q.est}`);
 }
 
 // ── TOAST ────────────────────────────────────────────────────────
