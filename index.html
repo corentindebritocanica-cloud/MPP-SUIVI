@@ -107,13 +107,21 @@
   @keyframes slide-v { 0%,100%{opacity:.45;transform:translateY(-50%)} 50%{opacity:1;transform:translateY(calc(-50% - 8px))} }
   @keyframes slide-h { 0%,100%{opacity:.45;transform:translateX(-50%)} 50%{opacity:1;transform:translateX(calc(-50% - 8px))} }
 
-  /* ── GRILLE TIERS — traits pointillés ultra-fins ── */
+  /* ── GRILLE TIERS — traits solides visibles ── */
   .gl {
     position:fixed; z-index:7; pointer-events:none;
     opacity:0; animation:fade-in .7s ease .5s forwards;
   }
-  .gl-v { top:0; bottom:0; width:1px; background:repeating-linear-gradient(to bottom, rgba(255,255,255,.28) 0 5px, transparent 5px 12px); }
-  .gl-h { left:0; right:0; height:1px; background:repeating-linear-gradient(to right, rgba(255,255,255,.28) 0 5px, transparent 5px 12px); }
+  .gl-v {
+    top:0; bottom:0; width:2px;
+    background:rgba(255,255,255,.52);
+    box-shadow:0 0 6px rgba(0,0,0,.7), 0 0 2px rgba(0,0,0,1);
+  }
+  .gl-h {
+    left:0; right:0; height:2px;
+    background:rgba(255,255,255,.52);
+    box-shadow:0 0 6px rgba(0,0,0,.7), 0 0 2px rgba(0,0,0,1);
+  }
   #gl1{left:33.33%} #gl2{left:66.66%} #gl3{top:33.33%} #gl4{top:66.66%}
   @keyframes fade-in { to{opacity:1} }
 
@@ -223,8 +231,8 @@
 
   /* ── MINIATURES ── */
   #thumb-strip {
-    position:fixed; bottom:calc(136px + env(safe-area-inset-bottom));
-    left:0; right:0; z-index:20;
+    position:fixed; bottom:calc(24px + env(safe-area-inset-bottom));
+    left:0; right:132px; z-index:20;
     display:flex; flex-direction:row; align-items:center; gap:8px;
     padding:0 20px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;
     pointer-events:all;
@@ -246,8 +254,9 @@
 
   /* ── BARRE DE CONTRÔLES ── */
   #controls {
-    position:fixed; bottom:0; left:0; right:0; z-index:20;
-    padding-bottom:calc(20px + env(safe-area-inset-bottom));
+    position:fixed; bottom:0; right:0; z-index:20;
+    padding-bottom:calc(24px + env(safe-area-inset-bottom));
+    padding-right:24px;
     padding-top:10px;
     display:flex; flex-direction:column; align-items:center; gap:10px;
     pointer-events:all;
